@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pi Camera Stream</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+    video { width: 100%; height: 100%; object-fit: contain; }
+    #status { position: fixed; top: 12px; left: 12px; color: #fff; font: 13px/1.4 monospace; background: rgba(0,0,0,.5); padding: 6px 10px; border-radius: 4px; }
+    #xr-btn { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); padding: 12px 28px; font-size: 16px; cursor: pointer; border: none; border-radius: 8px; background: #fff; display: none; }
+  </style>
+</head>
+<body>
+  <video id="video" autoplay playsinline muted></video>
+  <div id="status">Connecting…</div>
+  <button id="xr-btn">Enter AR</button>
+
+  <script>
+    const videoEl  = document.getElementById('video');
+    const statusEl = document.getElementById('status');
+    const xrBtn    = document.getElementById('xr-btn');
+
+    function setStatus(msg) { statusEl.textContent = msg; }
+
+    // ── WebRTC ────────────────────────────────────────────────────────────────
+    const pc = new RTCPeerConnection({
+      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+    });
+
+    pc.ontrack = ({ streams }) => {
+      if (streams?.[0]) {
+        videoEl.srcObject = streams[0];
+        setStatus('Streaming');
+      }
+    };
+
+    pc.onconnectionstatechange = () => {
+      setStatus(pc.connectionState);
+      if (pc.connectionState === 'failed') reconnect();
+    };
+
+    // ── WebSocket signaling ───────────────────────────────────────────────────
+    const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
+    let ws;
+
+    function connect() {
+      ws = new WebSocket(`${wsProto}://${location.host}/ws`);
+
+      ws.onopen = async () => {
+        setStatus('Negotiating…');
+        // recvonly transceiver so SDP offer includes a video m-line
+        pc.addTransceiver('video', { direction: 'recvonly' });
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        ws.send(JSON.stringify({ type: 'offer', sdp: offer.sdp }));
+      };
+
+      ws.onmessage = async ({ data }) => {
+        const msg = JSON.parse(data);
+        switch (msg.type) {
+          case 'answer':
+            await pc.setRemoteDescription({ type: 'answer', sdp: msg.sdp });
+            break;
+          case 'ice-candidate':
+            if (msg.candidate) {
+              await pc.addIceCandidate({
+                candidate:     msg.candidate,
+                sdpMid:        msg.sdp_mid  ?? null,
+                sdpMLineIndex: msg.sdp_mline_index ?? null
+              });
+            }
+            break;
+          case 'error':
+            console.error('Server error:', msg.message);
+            setStatus('Server error: ' + msg.message);
+            break;
+        }
+      };
+
+      ws.onclose = () => setStatus('Disconnected');
+      ws.onerror = (e) => console.error('WS error', e);
+    }
+
+    pc.onicecandidate = ({ candidate }) => {
+      if (candidate && ws?.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          type:            'ice-candidate',
+          candidate:       candidate.candidate,
+          sdp_mid:         candidate.sdpMid,
+          sdp_mline_index: candidate.sdpMLineIndex
+        }));
+      }
+    };
+
+    function reconnect() {
+      setTimeout(connect, 2000);
+    }
+
+    connect();
+
+    // ── WebXR AR (Meta Quest 3) ───────────────────────────────────────────────
+    // Strategy: immersive-ar + dom-overlay composites <video> over passthrough.
+    // The Quest 3 browser renders the whole body as a DOM overlay in AR space.
+    if (navigator.xr) {
+      navigator.xr.isSessionSupported('immersive-ar').then(supported => {
+        if (supported) xrBtn.style.display = 'block';
+      });
+    }
+
+    xrBtn.onclick = async () => {
+      try {
+        const session = await navigator.xr.requestSession('immersive-ar', {
+          requiredFeatures: ['local'],
+          optionalFeatures: ['dom-overlay'],
+          domOverlay: { root: document.body }
+        });
+
+        setStatus('AR active');
+        xrBtn.style.display = 'none';
+
+        session.addEventListener('end', () => {
+          setStatus('Streaming');
+          xrBtn.style.display = 'block';
+        });
+
+        // Keep session alive with a minimal frame loop
+        const refSpace = await session.requestReferenceSpace('local');
+        session.requestAnimationFrame(function loop(t, frame) {
+          session.requestAnimationFrame(loop);
+        });
+      } catch (e) {
+        console.error('XR session error:', e);
+        setStatus('AR unavailable: ' + e.message);
+      }
+    };
+  </script>
+</body>
+</html>
