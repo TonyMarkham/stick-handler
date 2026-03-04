@@ -117,6 +117,11 @@ async fn ws_write_task(
             Err(e) => tracing::warn!("failed to serialize signal message: {e}"),
         }
     }
+
+    // Complete the WebSocket close handshake before dropping the sink.
+    // Without this, dropping ws_write closes the TCP connection without
+    // sending a Close frame — the client sees an incomplete handshake error.
+    let _ = ws_write.close().await;
 }
 
 async fn shutdown_signal() {
