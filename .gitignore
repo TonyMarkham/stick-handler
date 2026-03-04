@@ -2,6 +2,7 @@
 .idea/
 pm.bat
 .claude/settings.local.json
+.env
 
 # Unity generated — do not commit
 /Unity/stick-handle/*.csproj

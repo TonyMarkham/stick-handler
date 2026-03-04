@@ -1,4 +1,4 @@
-﻿#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
 using System.Collections;
 using System.Collections.Concurrent;
@@ -47,9 +47,6 @@ public class VideoStreamController : MonoBehaviour
     // Note: WebRTC.Initialize/Dispose are internal; ContextManager calls them
     // automatically via [RuntimeInitializeOnLoadMethod] / Application.quitting.
     private Coroutine _webRtcUpdateCoroutine;
-
-    // Render-thread → main-thread texture handoff
-    private volatile Texture _pendingTexture;
 
     // BUG5 (R6): Prior comment was factually incorrect. SignalingClient marshals
     // OnConnected/OnError/OnDisconnected through _mainThreadQueue and dispatches
@@ -135,15 +132,19 @@ public class VideoStreamController : MonoBehaviour
         // Pump NativeWebSocket message queue every frame (required)
         _signaling?.DispatchMessages();
 
-        // Blit incoming video texture into RenderTexture on the main thread.
+        // Blit the latest decoded video frame into the RenderTexture every frame.
+        // WebRTC.Update() updates the VideoStreamTrack texture in-place each frame;
+        // polling CurrentTexture here (rather than relying on the OnVideoReceived event
+        // firing each frame) ensures we always blit the freshest decoded frame regardless
+        // of SDK version differences in event dispatch frequency.
         // BUG4 (R6): Guard _videoFeedRT — if the Inspector field is left unassigned,
         // Graphics.Blit(tex, null) silently blits to the screen backbuffer instead of
-        // the VideoQuad material. Video appears on the camera rather than the quad,
-        // with no exception and no log entry, making the bug non-obvious to diagnose.
-        if (_pendingTexture != null && _videoFeedRT != null)
+        // the VideoQuad material.
+        if (_videoFeedRT != null)
         {
-            Graphics.Blit(_pendingTexture, _videoFeedRT);
-            _pendingTexture = null;
+            var tex = _receiver?.CurrentTexture;
+            if (tex != null)
+                Graphics.Blit(tex, _videoFeedRT);
         }
 
         // Drain ICE candidates that arrived on the WebRTC worker thread.
@@ -177,7 +178,7 @@ public class VideoStreamController : MonoBehaviour
     private void OnConnectClicked()
     {
         Debug.Log("[Controller] Button Clicked");
-        
+
         // BUG4: treat _connecting like _connected to block a second coroutine
         // from starting during the async handshake window.
         if (_connected || _connecting) Disconnect();
@@ -256,9 +257,6 @@ public class VideoStreamController : MonoBehaviour
             if (_connectBtn != null) _connectBtn.text = "Connect";
             _receiver?.Dispose();
             _receiver = null;
-            // BUG3 (R5): Mirror Disconnect() — clear stale texture so Update() does not
-            // blit the last video frame into the RT after the socket closes.
-            _pendingTexture = null;
             // BUG4 (R5): Mirror Disconnect() — drain ICE queue and null _signaling.
             // Without this, Update() dequeues stale candidates and calls
             // SendIceCandidateAsync on a closed socket → OnError fires → "Error:
@@ -318,9 +316,6 @@ public class VideoStreamController : MonoBehaviour
 
             _pendingIceCandidates.Enqueue((c, mid, mlineIdx));
         };
-
-        // Render thread → volatile field, consumed in Update()
-        _receiver.OnVideoReceived += tex => _pendingTexture = tex;
 
         // Begin the connection; do NOT await — wait for OnConnected.
         _ = _signaling.ConnectAsync(host);
@@ -420,7 +415,6 @@ public class VideoStreamController : MonoBehaviour
         _signaling = null;
         _connected = false;
         _connecting = false;
-        _pendingTexture = null;
         // BUG4 (R2): Drain the ICE queue so stale candidates from the dead
         // session do not survive into the next Connect() call. Without this,
         // Update() sends previous-session ICE to the new server session the

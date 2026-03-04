@@ -1,16 +1,21 @@
 use crate::error::{ServerResult, camera_error};
 
-use bytes::Bytes;
+use bytes::{BufMut, Bytes, BytesMut};
 use tokio::{process::Command, sync::broadcast};
 use tokio_util::io::SyncIoBridge;
-use webrtc_media::io::h264_reader::H264Reader;
+use webrtc_media::io::h264_reader::{H264Reader, NalUnitType};
 
 const BROADCAST_CAPACITY: usize = 64;
 const H264_READER_BUF: usize = 1_048_576; // 1 MiB
 const COMMAND: &str = "rpicam-vid";
 const CODEC: &str = "h264";
+const LIBAV_FORMAT: &str = "h264";
+const LIBAV_VIDEO_CODEC: &str = "h264_v4l2m2m";
 const TIMEOUT: &str = "0";
 const OUTPUT: &str = "-";
+
+/// Annex B start code that precedes every NAL unit in the stream
+const START_CODE: &[u8] = &[0x00, 0x00, 0x00, 0x01];
 
 pub fn start_camera(
     width: u32,
@@ -21,6 +26,10 @@ pub fn start_camera(
         .args([
             "--codec",
             CODEC,
+            "--libav-format",
+            LIBAV_FORMAT,
+            "--libav-video-codec",
+            LIBAV_VIDEO_CODEC,
             "--width",
             &width.to_string(),
             "--height",
@@ -28,6 +37,8 @@ pub fn start_camera(
             "--framerate",
             &framerate.to_string(),
             "--inline",
+            "--intra",
+            "30",
             "--timeout",
             TIMEOUT,
             "--output",
@@ -52,14 +63,29 @@ pub fn start_camera(
 
         let bridge = SyncIoBridge::new(stdout);
         let mut reader = H264Reader::new(bridge, H264_READER_BUF);
+        let mut access_unit = BytesMut::new();
 
         loop {
             match reader.next_nal() {
                 Ok(nal) => {
-                    let data: Bytes = nal.data.freeze();
-                    tracing::trace!("NAL unit: {} bytes", data.len());
-                    // Ignore send errors — no active receivers is fine
-                    let _ = tx_clone.send(data);
+                    let unit_type = nal.unit_type;
+
+                    // Prepend Annex B start code then append the NAL data
+                    access_unit.put_slice(START_CODE);
+                    access_unit.put_slice(&nal.data);
+
+                    // VCL NALs (IDR and non-IDR slices) mark the end of an
+                    // access unit — flush the accumulated buffer as one frame.
+                    // SPS, PPS, SEI etc. keep buffering until the VCL NAL.
+                    match unit_type {
+                        NalUnitType::CodedSliceIdr | NalUnitType::CodedSliceNonIdr => {
+                            let frame = access_unit.split().freeze();
+                            tracing::trace!("access unit: {} bytes", frame.len());
+                            // Ignore send errors — no active receivers is fine
+                            let _ = tx_clone.send(frame);
+                        }
+                        _ => {}
+                    }
                 }
                 Err(e) => {
                     tracing::error!("H264Reader error: {e}");

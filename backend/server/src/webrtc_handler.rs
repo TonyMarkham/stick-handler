@@ -29,7 +29,7 @@ fn h264_codec_capability() -> RTCRtpCodecCapability {
         mime_type: MIME_TYPE_H264.to_owned(),
         clock_rate: 90_000,
         channels: 0,
-        sdp_fmtp_line: "level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42e01f"
+        sdp_fmtp_line: "level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=640c28"
             .to_owned(),
         rtcp_feedback: vec![],
     }
@@ -125,7 +125,6 @@ pub async fn handle_peer_session(
             tracing::info!("peer connection state: {state}");
             match state {
                 RTCPeerConnectionState::Failed
-                | RTCPeerConnectionState::Disconnected
                 | RTCPeerConnectionState::Closed => done.notify_one(),
                 _ => {}
             }
@@ -164,6 +163,7 @@ pub async fn handle_peer_session(
     let track = Arc::clone(&video_track);
     let done_camera = Arc::clone(&done);
     tokio::spawn(async move {
+        let mut frame_count: u64 = 0;
         loop {
             tokio::select! {
                 result = nal_rx.recv() => match result {
@@ -175,8 +175,11 @@ pub async fn handle_peer_session(
                         };
                         if let Err(e) = track.write_sample(&sample).await {
                             tracing::warn!("write_sample error: {e}");
-                            done_camera.notify_one();
-                            break;
+                        } else {
+                            frame_count += 1;
+                            if frame_count % 30 == 0 {
+                                tracing::debug!("sent {frame_count} frames");
+                            }
                         }
                     }
                     Err(broadcast::error::RecvError::Lagged(n)) => {

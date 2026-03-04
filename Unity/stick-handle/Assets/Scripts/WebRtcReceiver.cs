@@ -1,4 +1,4 @@
-﻿#pragma warning disable CS8601 // Possible null reference assignment.
+#pragma warning disable CS8601 // Possible null reference assignment.
 
 using System;
 using System.Collections;
@@ -24,6 +24,17 @@ public class WebRtcReceiver : IDisposable
     // ── Private State ────────────────────────────────────────────────────
     private RTCPeerConnection? _pc;
     private VideoStreamTrack? _videoTrack;
+
+    // Cached texture from the most recent OnVideoReceived callback.
+    // volatile so VideoStreamController.Update() can safely read it from
+    // the main thread while the render thread writes it.
+    private volatile Texture? _currentTexture;
+
+    /// <summary>
+    /// The most recently decoded video frame texture, or null if no frame
+    /// has arrived yet. Updated on the render thread; safe to read from any thread.
+    /// </summary>
+    public Texture? CurrentTexture => _currentTexture;
 
     // ── Constructor ──────────────────────────────────────────────────────
     public WebRtcReceiver()
@@ -73,7 +84,11 @@ public class WebRtcReceiver : IDisposable
     }
 
     // ── Private Helpers ──────────────────────────────────────────────────
-    private void OnVideoTrackReceived(Texture tex) => OnVideoReceived?.Invoke(tex);
+    private void OnVideoTrackReceived(Texture tex)
+    {
+        _currentTexture = tex;
+        OnVideoReceived?.Invoke(tex);
+    }
 
     // ── Negotiation ──────────────────────────────────────────────────────
     /// <summary>
@@ -171,6 +186,8 @@ public class WebRtcReceiver : IDisposable
     // ── Disposal ─────────────────────────────────────────────────────────
     public void Dispose()
     {
+        _currentTexture = null;
+
         // Unsubscribe video track event before nulling the field.
         if (_videoTrack != null)
         {
