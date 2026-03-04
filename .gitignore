@@ -1,2 +1,15 @@
 /target/
 .idea/
+pm.bat
+.claude/settings.local.json
+
+# Unity generated — do not commit
+/Unity/stick-handle/*.csproj
+/Unity/stick-handle/*.sln
+
+# Unity runtime/cache — do not commit
+/Unity/stick-handle/Library/
+/Unity/stick-handle/Logs/
+/Unity/stick-handle/obj/
+/Unity/stick-handle/Temp/
+/Unity/stick-handle/UserSettings/

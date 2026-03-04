@@ -1,9 +1,18 @@
 {
+  "env": {
+    "PM": ".pm/bin/pm.exe"
+  },
   "permissions": {
     "allow": [
+      "WebSearch",
+      "WebFetch(domain:sipsorcery-org.github.io)",
+      "WebFetch(domain:www.nuget.org)",
+      "WebFetch(domain:deepwiki.com)",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:docs.rs)",
-      "WebFetch(domain:crates.io)"
+      "WebFetch(domain:crates.io)",
+      "Bash($PM comment:*)",
+      "Bash($PM work-item:*)"
     ]
   }
 }

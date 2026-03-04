@@ -1,0 +1,216 @@
+# PM Server Configuration Example
+# ================================
+# Copy to .pm/config.toml in your working directory (relative to where you run pm-server).
+# All values shown are defaults - only override what you need.
+#
+# Environment variables override TOML values with PM_ prefix:
+#   PM_SERVER_PORT=9000        overrides [server].port
+#   PM_AUTH_ENABLED=true       overrides [auth].enabled
+#   PM_LOG_LEVEL=debug         overrides [logging].level
+#   PM_CB_FAILURE_THRESHOLD=10 overrides [circuit_breaker].failure_threshold
+#   PM_RETRY_MAX_ATTEMPTS=5    overrides [retry].max_attempts
+#   PM_HANDLER_TIMEOUT_SECS=60 overrides [handler].timeout_secs
+#   PM_VALIDATION_MAX_COMMENT_LENGTH=10000 overrides [validation].max_comment_length
+
+# =============================================================================
+# Server Configuration
+# =============================================================================
+
+[server]
+# Bind address (default: 127.0.0.1)
+# Use "0.0.0.0" to listen on all interfaces
+host = "127.0.0.1"
+
+# Server port (0 = auto-assign, or 1024-65535 for a specific port)
+#
+# Port 0 (auto-assign):
+#   - OS picks an available port automatically
+#   - Actual port is written to .pm/server.json for CLI auto-discovery
+#   - Perfect for multi-repo setups (no conflicts)
+#   - Port changes on every restart (not suitable for webhooks)
+#
+# Specific port (e.g., 8000):
+#   - Stable URL for webhooks, bookmarks, monitoring
+#   - Conflicts if multiple servers run in different repos
+#
+# Recommendation: Use 0 unless you need a stable URL for external tools.
+port = 0
+
+# Maximum concurrent connections (range: 1-100000, default: 10000)
+max_connections = 10000
+
+# Auto-shutdown when no connections for N seconds (0 = disabled, default: 0)
+# Desktop mode sets this via PM_IDLE_SHUTDOWN_SECS env var
+idle_shutdown_secs = 2
+
+# =============================================================================
+# Database Configuration
+# =============================================================================
+
+[database]
+# SQLite database file path (relative to .pm/ directory, default: "data.db")
+# Must be relative and cannot contain '..' for security
+path = "data.db"
+
+# =============================================================================
+# Authentication Configuration
+# =============================================================================
+
+[auth]
+# Enable JWT authentication (default: false)
+# When false, server runs in desktop/development mode
+enabled = false
+
+# === JWT Secret (HS256) ===
+# Symmetric key for HS256 JWT validation
+# Minimum length: 32 characters
+# Only used when auth.enabled = true
+# NEVER commit this to version control!
+# jwt_secret = "your-secret-key-minimum-32-characters-long"
+
+# === JWT Public Key (RS256) ===
+# Path to RSA public key PEM file for RS256 JWT validation
+# Path is relative to .pm/ directory and cannot contain '..'
+# Only used when auth.enabled = true and jwt_secret is not provided
+# jwt_public_key_path = "public.pem"
+
+# === Desktop Mode User ID ===
+# User ID when auth is disabled (default: "local-user")
+# Set to empty string "" to generate a unique session ID per server start
+# desktop_user_id = "local-user"
+
+# =============================================================================
+# Logging Configuration
+# =============================================================================
+
+[logging]
+# Log level (default: "info")
+# Options: "trace", "debug", "info", "warn", "error", "off"
+level = "info"
+
+# Log directory (relative to .pm/ directory, default: "log")
+dir = "log"
+
+# Enable colored output (default: true)
+# Set to false for non-TTY environments (CI, Docker logs, systemd)
+colored = false
+
+# Optional log file name (omit for stdout logging)
+# When set, logs go to {dir}/{file} instead of stdout
+# Desktop mode sets this via PM_LOG_FILE env var
+# file = "pm-server.log"
+
+# =============================================================================
+# WebSocket Configuration
+# =============================================================================
+
+[websocket]
+# Send buffer size per connection (range: 1-10000, default: 100)
+# Higher values = more memory, lower risk of backpressure
+send_buffer_size = 100
+
+# Heartbeat ping interval in seconds (range: 5-300, default: 30)
+# How often the server sends ping messages to clients
+heartbeat_interval_secs = 30
+
+# Heartbeat timeout in seconds (range: 10-600, default: 60)
+# Must be greater than heartbeat_interval_secs
+# Connection closed if no pong received within this time
+heartbeat_timeout_secs = 31
+
+# =============================================================================
+# Rate Limiting Configuration
+# =============================================================================
+
+[rate_limit]
+# Maximum requests per window (range: 1-10000, default: 100)
+# Applied per WebSocket connection to prevent abuse
+max_requests = 1000
+
+# Rate limit window in seconds (range: 1-3600, default: 60)
+# Requests are counted within this sliding window
+window_secs = 60
+
+# =============================================================================
+# Circuit Breaker Configuration
+# =============================================================================
+
+[circuit_breaker]
+# Number of failures before opening the circuit (range: 1-100, default: 5)
+# When circuit opens, requests are blocked to prevent cascading failures
+failure_threshold = 5
+
+# Seconds to keep circuit open before testing recovery (range: 1-300, default: 30)
+# After this duration, circuit transitions to half-open state
+open_duration_secs = 30
+
+# Successful requests needed in half-open state to close circuit (range: 1-50, default: 3)
+# Circuit fully closes after this many consecutive successes
+half_open_success_threshold = 3
+
+# Window in seconds for counting failures (range: 1-600, default: 60)
+# Failures outside this window are not counted toward threshold
+failure_window_secs = 60
+
+# =============================================================================
+# Retry Configuration
+# =============================================================================
+
+[retry]
+# Maximum number of retry attempts including initial attempt (range: 1-10, default: 3)
+# Total attempts = initial + (max_attempts - 1) retries
+max_attempts = 3
+
+# Initial delay before first retry in milliseconds (range: 10-10000, default: 100)
+# Subsequent delays multiply by backoff_multiplier
+initial_delay_ms = 100
+
+# Maximum delay between retries in seconds (range: 1-60, default: 5)
+# Caps exponential backoff to prevent excessive waits
+max_delay_secs = 5
+
+# Multiplier for exponential backoff (range: 1.0-10.0, default: 2.0)
+# Delay pattern: 100ms -> 200ms -> 400ms -> 800ms... (with 2.0 multiplier)
+backoff_multiplier = 2.0
+
+# Add random jitter to delays (default: true)
+# Prevents thundering herd when many clients retry simultaneously
+jitter = true
+
+# =============================================================================
+# Handler Configuration
+# =============================================================================
+
+[handler]
+# Maximum time in seconds for a handler to complete (range: 1-300, default: 30)
+# Requests exceeding this timeout are cancelled to prevent resource exhaustion
+timeout_secs = 30
+
+# =============================================================================
+# Validation Configuration
+# =============================================================================
+
+[validation]
+# Maximum length for work item titles (range: 1-500, default: 200)
+# Prevents abuse and ensures reasonable display sizes
+max_title_length = 200
+
+# Maximum length for work item descriptions (range: 0-100000, default: 10000)
+# Large enough for detailed specs, small enough to prevent abuse
+max_description_length = 150000
+
+# Maximum story points allowed (range: 0-1000, default: 100)
+# Prevents typos like entering 100000 instead of 10
+max_story_points = 100
+
+# Maximum length for error messages returned to clients (range: 50-1000, default: 200)
+# Prevents leaking stack traces while allowing useful error messages
+max_error_message_length = 200
+
+# Maximum length for comment content (range: 1-50000, default: 5000)
+# Allows detailed comments while preventing abuse
+max_comment_length = 150000
+
+# Maximum length for sprint names (range: 1-500, default: 100)
+# Sprint names should be concise identifiers
+max_sprint_name_length = 100

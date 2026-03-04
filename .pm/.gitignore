@@ -1,0 +1,17 @@
+# Runtime files - not tracked
+# data.json and config.toml ARE tracked (not listed here = tracked).
+
+# SQLite database (local performance — use data.json for git sync)
+data.db
+
+# Negate root .gitignore's *.json pattern if one exists
+!data.json
+
+bin/
+*.db-wal
+*.db-shm
+server.json
+server.lock
+logs/
+log/
+tauri/
