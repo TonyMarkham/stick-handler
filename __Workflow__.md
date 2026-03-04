@@ -74,40 +74,31 @@ Use /pm to audit PONE-15 and all its descendants.
 ## RULES — READ THESE BEFORE DOING ANYTHING ELSE
 
 1. **DO NOT USE SUB-AGENTS** Fetch each item yourself. Sub-Agents summarize and that breaks your task.
-
-2. **ONE TASK AT A TIME.** Fetch each work item individually with `$PM work-item get`. Do NOT bulk-export. Do NOT process multiple tasks
-in one step.
-
+2. **ONE TASK AT A TIME.** Fetch each work item individually with `$PM work-item get`. Do NOT bulk-export. Do NOT process multiple tasks in one step.
 3. Use the `--output-toml` flag when getting each work item.
-
-4. **YOU ARE AN AUDITOR, NOT A PLANNER.** Your only job is to find bugs in the implementation code inside each task's description. Not
-praise. Not planning feedback. BUGS.
-
-5. **WRITE FINDINGS TO A FILE.** Create `/tmp/pone15_audit.md`. After auditing each task, APPEND that task's bugs to the file. Do not post
-anything to the PM system until ALL tasks are done.
-
-6. **POST ONE COMMENT ON THE EPIC ONLY.** When every task has been audited, post the entire `/tmp/pone15_audit.md` content as a single
-comment on PONE-15 using `$PM comment create`.
+4. **YOU ARE AN AUDITOR, NOT A PLANNER.** Your only job is to find bugs in the implementation code inside each task's description. Not praise. Not planning feedback. BUGS.
+5. **WRITE FINDINGS TO A FILE.** Create `/tmp/pone15_audit.md`. After auditing each task, APPEND that task's bugs to the file. Do not post anything to the PM system until ALL tasks are done.
+6. **POST ONE COMMENT ON THE EPIC ONLY.** When every task has been audited, post the entire `/tmp/pone15_audit.md` content as a single comment on PONE-15 using `$PM comment create`.
 
 ## HOW TO AUDIT EACH TASK
 
 For every task with code in the description:
-- Read EVERY line of code. Not a summary — every line.
-- Check for: compile errors, missing imports, wrong API signatures, incorrect types, race conditions, silent failures, wrong table/field names, inconsistencies with peer tasks
-- Cross-reference signatures against other tasks (e.g. if Task A calls a function defined in Task B, verify the call matches the definition)
-- For Rust: check `.len()` vs `.chars().count()`, missing `#[derive]`, blocking in async, `query_scalar!` macro on runtime DBs, missing PRAGMAs, `unwrap_or_default()` swallowing errors
-- For tests: check that assertions actually test what they claim, that setup inserts into the correct tables, that RAII guards use the correct APIs
-- Audit the entire task, do not only criticize the low-hanging fruit. Remember you are THE Gordon Ramsay!
-- Do not invent gap(s)/bug(s), be honest.
+— Read EVERY line of code. Not a summary — every line.
+— Check for: compile errors, missing imports, wrong API signatures, incorrect types, race conditions, silent failures, wrong table/field names, inconsistencies with peer tasks
+— Cross-reference signatures against other tasks (e.g. if Task A calls a function defined in Task B, verify the call matches the definition)
+— For Rust: check `.len()` vs `.chars().count()`, missing `#[derive]`, blocking in async, `query_scalar!` macro on runtime DBs, missing PRAGMAs, `unwrap_or_default()` swallowing errors
+— For tests: check that assertions actually test what they claim, that setup inserts into the correct tables, that RAII guards use the correct APIs
+— Audit the entire task, do not only criticize the low-hanging fruit. Remember you are THE Gordon Ramsay!
+— Do not invent gap(s)/bug(s), be honest.
 
 ## FOR EACH BUG FOUND
 
 Document with: Task ID, severity (Critical/Serious/Minor), exact code quote, explanation of why it's wrong, fix.
 
 ## SEVERITY GUIDE
-- **Critical (-15)**: Won't compile, data corruption, assertion always passes/fails regardless of behaviour
-- **Serious (-10)**: Race condition, wrong table/field, silent failure, API mismatch
-- **Minor (-3)**: Style, redundant code, missing index
+— **Critical (-15)**: Won't compile, data corruption, assertion always passes/fails regardless of behaviour
+— **Serious (-10)**: Race condition, wrong table/field, silent failure, API mismatch
+— **Minor (-3)**: Style, redundant code, missing index
 
 ## SCORING
 Start at 100. Add +5 good structure, +10 if code exists in tasks. Subtract all bug deductions. Show the maths.
@@ -119,66 +110,37 @@ Start at 100. Add +5 good structure, +10 if code exists in tasks. Subtract all b
 4. When ALL tasks are done, post the file contents as a comment on PONE-15
 
 ## Previous Reviews
-- Use /pm to read the last comment on PONE-15. 
-- Recognize that your previous reviews are previous comments on PONE-15
-- Recognize that each task that has been updated per one of your previous reviews is documented as a commont on that Task.
+— Use /pm to read the last comment on PONE-15. 
+— Recognize that your previous reviews are previous comments on PONE-15
+— Recognize that each task that has been updated per one of your previous reviews is documented as a commont on that Task.
 ```
 
 
 ### Address Super-Audit
 ```markdown
-- Use /pm to read the last comment on PONE-15.
-- The review is of the implementation outlined in each Task's Description.
-- Audit the review and build a todo list of Agile Board Task Descriptions that need to address the identified bug(s)/gap(s)
+— Use /pm to read the last comment on PONE-15.
+— The review is of the implementation outlined in each Task's Description.
+— Audit the review and build a todo list of Agile Board Task Descriptions that need to address the identified bug(s)/gap(s)
 
 ## RULES — READ THESE BEFORE DOING ANYTHING ELSE
 
 1. **DO NOT USE SUB-AGENTS** Fetch each item yourself. Sub-Agents summarize and that breaks your task.
-
 2. **ONE TASK AT A TIME.** Fetch each work item individually with `$PM work-item get`. Do NOT bulk-export. Do NOT process multiple tasks in one step.
-
 3. Use the `--output-toml` flag when getting each work item.
-
 4. Modify the work item description in the toml.
-
 5. Update each work item using the modified toml and the `--from-toml` flag.
-
 6. Identify if **THIS** Task was flagged as having any issue(s) in the review.
-
 7. While addressing the issue(s) ensure that everything complies with /pro-rust
-
 8. **POST ONE COMMENT ON THE TASK ONLY IF IT WAS MODIFIED** If you chose to modify **THIS** Task, add a comment to it identifying what you changed and why.
-
 9. **DO NOT REMOVE CODE BLOCKS WITH EXPLICITLY GETTING HUMAN INVOLVED**
-```
-
-### Address Super-Audit
-```markdown
-- Use /pm to read the last comment on PONE-15.
-- **DO NOT USE SUB-AGENTS** Fetch each item yourself. Sub-Agents summarize and that breaks your task.
-- From the comment, identify the Tasks that have issues.
-- Create a todo that identified the work that you need to perform in this session.
-
-## RESOLUTION RULES — READ THESE BEFORE DOING ANYTHING ELSE
-
-1. Make sure everything complies with /pro-rust
-
-2. **POST ONE COMMENT ON THE TASK ONLY IF IT WAS MODIFIED** If you chose to modify **THIS** Task, add a comment to it identifying what you changed and why.
-
-3. **DO NOT REMOVE CODE BLOCKS WITH EXPLICITLY GETTING HUMAN INVOLVED**
-
-## START
-1. List all descendants: `$PM work-item list PONE --descendants-of PONE-15`
-2. Record the full list of IDs
-3. Fetch and audit EACH ONE individually
 ```
 
 ### Individual
 ```text
-- Use /pm to audit PONE-126 (Story) and PONE-127 (Task)
-- Do **NOT** use a sub-agent
-- Strip out any commentary about fixing issues.
-- Leave in commentary about what this task is for and what and code blocks are doing.
+— Use /pm to audit PONE-18 (Task)
+— Do **NOT** use a sub-agent
+— Strip out any commentary about fixing issues.
+— Leave in commentary about what this task is for and what and code blocks are doing.
 ```
 ---
 
