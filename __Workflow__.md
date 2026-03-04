@@ -16,16 +16,16 @@ Use Claude Code's Panning Mode and allow it to create and itterate on the origin
 
 ### Review
 ```text
-- use /pm to find PONE-6
+- use /pm to find PONE-15
 - Review all descendant tasks.
-- Write the review as a comment on PONE-6
+- Write the review as a comment on PONE-15
 
 PONE-14 and 15 epics have already been implemented, so there is production code in the repo to reference if needed
 ```
 
 ### Address Review
 ```text
-- use /pm to find PONE-6
+- use /pm to find PONE-15
 - Address the review in the latest comment
 - use the /pro-rust skill to align with my preferred patterns
 
@@ -36,7 +36,7 @@ Make sure everything complies with /pro-rust
 
 ### Implement
 ```text
-- use /pm to find PONE-6
+- use /pm to find PONE-15
 - Review all descendant tasks.
 - read `CRITICAL_OPERATING_CONSTRAINTS.md`
 - Teach me by presenting bite-sized chunks for me to write/edit keeping the commentary separate from the code snippets to make the code snippets easier for me to follow
@@ -47,7 +47,7 @@ Make sure everything complies with /pro-rust
 
 ### Validate
 ```text
-- use /pm to find PONE-6
+- use /pm to find PONE-15
 - read `CRITICAL_OPERATING_CONSTRAINTS.md`
 - Review all descendant tasks.
 - Identify any gaps that might have been skipped when implementing all of the work items in this repo.
@@ -69,7 +69,7 @@ I have staged all files, please commit without a byline.
 
 ### Super-Audit
 ```markdown
-Use /pm to audit PONE-6 and all its descendants.
+Use /pm to audit PONE-15 and all its descendants.
 
 ## RULES — READ THESE BEFORE DOING ANYTHING ELSE
 
@@ -83,11 +83,11 @@ in one step.
 4. **YOU ARE AN AUDITOR, NOT A PLANNER.** Your only job is to find bugs in the implementation code inside each task's description. Not
 praise. Not planning feedback. BUGS.
 
-5. **WRITE FINDINGS TO A FILE.** Create `/tmp/pone6_audit.md`. After auditing each task, APPEND that task's bugs to the file. Do not post
+5. **WRITE FINDINGS TO A FILE.** Create `/tmp/pone15_audit.md`. After auditing each task, APPEND that task's bugs to the file. Do not post
 anything to the PM system until ALL tasks are done.
 
-6. **POST ONE COMMENT ON THE EPIC ONLY.** When every task has been audited, post the entire `/tmp/pone6_audit.md` content as a single
-comment on PONE-6 using `$PM comment create`.
+6. **POST ONE COMMENT ON THE EPIC ONLY.** When every task has been audited, post the entire `/tmp/pone15_audit.md` content as a single
+comment on PONE-15 using `$PM comment create`.
 
 ## HOW TO AUDIT EACH TASK
 
@@ -113,16 +113,21 @@ Document with: Task ID, severity (Critical/Serious/Minor), exact code quote, exp
 Start at 100. Add +5 good structure, +10 if code exists in tasks. Subtract all bug deductions. Show the maths.
 
 ## START
-1. List all descendants: `$PM work-item list PONE --descendants-of PONE-6 --include-done`
+1. List all descendants: `$PM work-item list PONE --descendants-of PONE-15 --include-done`
 2. Record the full list of IDs
-3. Fetch and audit EACH ONE individually, appending findings to `/tmp/pone6_audit.md`
-4. When ALL tasks are done, post the file contents as a comment on PONE-6
+3. Fetch and audit EACH ONE individually, appending findings to `/tmp/pone15_audit.md`
+4. When ALL tasks are done, post the file contents as a comment on PONE-15
+
+## Previous Reviews
+- Use /pm to read the last comment on PONE-15. 
+- Recognize that your previous reviews are previous comments on PONE-15
+- Recognize that each task that has been updated per one of your previous reviews is documented as a commont on that Task.
 ```
 
 
 ### Address Super-Audit
 ```markdown
-- Use /pm to read the last comment on PONE-6.
+- Use /pm to read the last comment on PONE-15.
 - The review is of the implementation outlined in each Task's Description.
 - Audit the review and build a todo list of Agile Board Task Descriptions that need to address the identified bug(s)/gap(s)
 
@@ -149,7 +154,7 @@ Start at 100. Add +5 good structure, +10 if code exists in tasks. Subtract all b
 
 ### Address Super-Audit
 ```markdown
-- Use /pm to read the last comment on PONE-6.
+- Use /pm to read the last comment on PONE-15.
 - **DO NOT USE SUB-AGENTS** Fetch each item yourself. Sub-Agents summarize and that breaks your task.
 - From the comment, identify the Tasks that have issues.
 - Create a todo that identified the work that you need to perform in this session.
@@ -163,7 +168,7 @@ Start at 100. Add +5 good structure, +10 if code exists in tasks. Subtract all b
 3. **DO NOT REMOVE CODE BLOCKS WITH EXPLICITLY GETTING HUMAN INVOLVED**
 
 ## START
-1. List all descendants: `$PM work-item list PONE --descendants-of PONE-6`
+1. List all descendants: `$PM work-item list PONE --descendants-of PONE-15`
 2. Record the full list of IDs
 3. Fetch and audit EACH ONE individually
 ```
