@@ -4,6 +4,7 @@ use bytes::Bytes;
 use signal_server::SignalMessage;
 use std::{sync::Arc, time::Duration};
 use tokio::sync::{Notify, broadcast, mpsc};
+use tracing::{debug, info, trace, warn};
 use webrtc::{
     api::{
         APIBuilder,
@@ -114,7 +115,7 @@ pub async fn handle_peer_session(
                     };
                     let _ = ws_tx.send(msg);
                 }
-                Err(e) => tracing::warn!("ice candidate to_json error: {e}"),
+                Err(e) => warn!("ice candidate to_json error: {e}"),
             }
         })
     }));
@@ -122,10 +123,11 @@ pub async fn handle_peer_session(
     pc.on_peer_connection_state_change(Box::new(move |state| {
         let done = Arc::clone(&done_clone);
         Box::pin(async move {
-            tracing::info!("peer connection state: {state}");
+            info!("peer connection state: {state}");
             match state {
-                RTCPeerConnectionState::Failed
-                | RTCPeerConnectionState::Closed => done.notify_one(),
+                RTCPeerConnectionState::Failed | RTCPeerConnectionState::Closed => {
+                    done.notify_one()
+                }
                 _ => {}
             }
         })
@@ -135,7 +137,7 @@ pub async fn handle_peer_session(
     let offer_sdp = loop {
         match ws_rx.recv().await {
             Some(SignalMessage::Offer { sdp }) => break sdp,
-            Some(other) => tracing::debug!("ignoring pre-offer message: {other:?}"),
+            Some(other) => debug!("ignoring pre-offer message: {other:?}"),
             None => return Err(webrtc_error("WebSocket closed before offer")),
         }
     };
@@ -174,19 +176,19 @@ pub async fn handle_peer_session(
                             ..Default::default()
                         };
                         if let Err(e) = track.write_sample(&sample).await {
-                            tracing::warn!("write_sample error: {e}");
+                            warn!("write_sample error: {e}");
                         } else {
                             frame_count += 1;
-                            if frame_count % 30 == 0 {
-                                tracing::debug!("sent {frame_count} frames");
+                            if frame_count.is_multiple_of(30) {
+                                trace!("sent {frame_count} frames");
                             }
                         }
                     }
                     Err(broadcast::error::RecvError::Lagged(n)) => {
-                        tracing::warn!("camera broadcast lagged {n} frames");
+                        warn!("camera broadcast lagged {n} frames");
                     }
                     Err(broadcast::error::RecvError::Closed) => {
-                        tracing::info!("camera broadcast closed");
+                        info!("camera broadcast closed");
                         done_camera.notify_one();
                         break;
                     }

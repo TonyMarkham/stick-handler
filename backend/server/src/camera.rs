@@ -1,7 +1,11 @@
-use crate::error::{ServerResult, camera_error};
+use crate::{
+    camera_handle::CameraHandle,
+    error::{ServerResult, camera_error},
+};
 
-use bytes::{BufMut, Bytes, BytesMut};
-use tokio::{process::Command, sync::broadcast};
+use bytes::{BufMut, BytesMut};
+use std::sync::{Arc, Mutex as StdMutex};
+use tokio::{process::Command, sync::broadcast, task::JoinHandle};
 use tokio_util::io::SyncIoBridge;
 use webrtc_media::io::h264_reader::{H264Reader, NalUnitType};
 
@@ -17,11 +21,17 @@ const OUTPUT: &str = "-";
 /// Annex B start code that precedes every NAL unit in the stream
 const START_CODE: &[u8] = &[0x00, 0x00, 0x00, 0x01];
 
+/// Spawn `rpicam-vid` and return a [`CameraHandle`] for control plus a
+/// [`JoinHandle`] for lifecycle tracking.
+///
+/// The [`JoinHandle`] resolves when the blocking read task exits — either
+/// because [`CameraHandle::stop`] was called or because the subprocess crashed.
+/// Pass it to [`crate::app_state::spawn_camera_monitor`] to keep shared state accurate.
 pub fn start_camera(
     width: u32,
     height: u32,
     framerate: u32,
-) -> ServerResult<broadcast::Sender<Bytes>> {
+) -> ServerResult<(CameraHandle, JoinHandle<()>)> {
     let mut child = Command::new(COMMAND)
         .args([
             "--codec",
@@ -54,12 +64,16 @@ pub fn start_camera(
         .take()
         .ok_or_else(|| camera_error(format!("{COMMAND} stdout not captured")))?;
 
+    let child = Arc::new(StdMutex::new(child));
+    let child_for_task = Arc::clone(&child);
+
     let (tx, _) = broadcast::channel(BROADCAST_CAPACITY);
     let tx_clone = tx.clone();
 
-    tokio::task::spawn_blocking(move || {
-        // Keep child alive for the duration of the blocking task
-        let _child = child;
+    let task = tokio::task::spawn_blocking(move || {
+        // Keep child alive for the duration of the blocking task.
+        // When this guard drops, the Arc refcount falls and the Child is freed.
+        let _child_guard = child_for_task;
 
         let bridge = SyncIoBridge::new(stdout);
         let mut reader = H264Reader::new(bridge, H264_READER_BUF);
@@ -70,18 +84,13 @@ pub fn start_camera(
                 Ok(nal) => {
                     let unit_type = nal.unit_type;
 
-                    // Prepend Annex B start code then append the NAL data
                     access_unit.put_slice(START_CODE);
                     access_unit.put_slice(&nal.data);
 
-                    // VCL NALs (IDR and non-IDR slices) mark the end of an
-                    // access unit — flush the accumulated buffer as one frame.
-                    // SPS, PPS, SEI etc. keep buffering until the VCL NAL.
                     match unit_type {
                         NalUnitType::CodedSliceIdr | NalUnitType::CodedSliceNonIdr => {
                             let frame = access_unit.split().freeze();
                             tracing::trace!("access unit: {} bytes", frame.len());
-                            // Ignore send errors — no active receivers is fine
                             let _ = tx_clone.send(frame);
                         }
                         _ => {}
@@ -95,5 +104,5 @@ pub fn start_camera(
         }
     });
 
-    Ok(tx)
+    Ok((CameraHandle { sender: tx, child }, task))
 }
