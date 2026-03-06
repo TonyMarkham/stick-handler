@@ -1,0 +1,15 @@
+.bs {
+    font-size: 16px;
+    height: 30px;
+    background-color: rgba(0, 120, 215, 0.9);
+    color: white;
+    border-radius: 6px;
+}
+
+.bs:hover {
+    background-color: rgb(200, 20, 20);
+}
+
+.bs:active {
+    background-color: rgb(32, 200, 20);
+}
