@@ -1,9 +1,42 @@
+:root {
+    --tf-height: 30px;
+}
+
+.control-panel {
+    flex-direction: column;
+    justify-content: flex-start;
+    padding: 20px;
+    background-color: rgba(0, 0, 0, 0.75);
+    width: 100%;
+    height: 100%;
+}
+
+.tf {
+    font-size: 16px;
+    height: var(--tf-height);
+}
+
+.tf Label {
+    min-width: 100px;
+    max-width: 100px;
+    color: whitesmoke;
+}
+
+.tf #unity-text-input {
+    padding: 2px;
+}
+
+.tf TextElement {
+    font-size: 16px;
+}
+
 .bs {
     font-size: 16px;
-    height: 30px;
+    height: var(--tf-height);
     background-color: rgba(0, 120, 215, 0.9);
     color: white;
     border-radius: 6px;
+    margin: 8px;
 }
 
 .bs:hover {
@@ -12,4 +45,17 @@
 
 .bs:active {
     background-color: rgb(32, 200, 20);
+}
+
+.status {
+    font-size: 16px;
+    color: rgb(200, 200, 200);
+    -unity-text-align: middle-center;
+}
+
+.enable-container {
+    flex-direction: column;
+    justify-content: flex-start;
+    padding: 20px;
+    width: 100%;
 }

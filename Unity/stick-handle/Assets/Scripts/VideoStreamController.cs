@@ -5,15 +5,22 @@ using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.UIElements;
 using Unity.WebRTC;
 
 [RequireComponent(typeof(UIDocument))]
 public class VideoStreamController : MonoBehaviour
 {
+    [SerializeField] private string _videoFeedURL = "test-pi";
+    
     [Header("Video")] [SerializeField] private RenderTexture _videoFeedRT;
 
     // UI Toolkit element references (queried in OnEnable)
+    private Button _videoStreamBtn;
+    private bool _isStreaming;
+    private Coroutine _toggleStreamingCoroutine;
+    
     private TextField _ipField;
     private Button _connectBtn;
     private Label _statusLabel;
@@ -87,6 +94,7 @@ public class VideoStreamController : MonoBehaviour
 
         _ipField = root.Q<TextField>("ip-field");
         _connectBtn = root.Q<Button>("connect-btn");
+        _videoStreamBtn = root.Q<Button>("video-stream-btn");
         _statusLabel = root.Q<Label>("status-label");
 
         // BUG7: Q<T>() returns null on name mismatch — guard before use.
@@ -101,6 +109,12 @@ public class VideoStreamController : MonoBehaviour
             Debug.LogError("[Controller] 'connect-btn' not found in UXML");
             return;
         }
+        
+        if (_videoStreamBtn == null)
+        {
+            Debug.LogError("[Controller] 'video-stream-btn' not found in UXML");
+            return;
+        }
 
         if (_statusLabel == null)
         {
@@ -108,7 +122,9 @@ public class VideoStreamController : MonoBehaviour
             return;
         }
 
+        _ipField.value = _videoFeedURL;
         _connectBtn.clicked += OnConnectClicked;
+        _videoStreamBtn.clicked += HandleStreamingToggle;
     }
 
     private void OnDisable()
@@ -125,6 +141,9 @@ public class VideoStreamController : MonoBehaviour
         // BUG7: null-guard for symmetry with null-checked OnEnable
         if (_connectBtn != null)
             _connectBtn.clicked -= OnConnectClicked;
+        
+        if (_videoStreamBtn != null)
+            _videoStreamBtn.clicked -= HandleStreamingToggle;
     }
 
     private void Update()
@@ -437,5 +456,35 @@ public class VideoStreamController : MonoBehaviour
         // BUG7: guard in case OnEnable bailed early on a missing element
         if (_statusLabel != null)
             _statusLabel.text = msg;
+    }
+    
+    private void HandleStreamingToggle()
+    {
+        _toggleStreamingCoroutine = StartCoroutine(ToggleVideoStreaming());
+    }
+    
+    private IEnumerator ToggleVideoStreaming()
+    {
+        string host = (_ipField != null && !string.IsNullOrWhiteSpace(_ipField.value))
+            ? _ipField.value.Trim()
+            : _videoFeedURL;
+
+        string endpoint = _isStreaming ? "stop" : "start";
+        string url = $"http://{host}:8080/camera/{endpoint}";
+
+        using var req = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPOST);
+        req.downloadHandler = new DownloadHandlerBuffer();
+        yield return req.SendWebRequest();
+
+        if (req.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogError($"[Controller] Camera {endpoint} failed: {req.error}");
+            yield break;
+        }
+
+        _isStreaming = !_isStreaming;
+        if (_videoStreamBtn != null)
+            _videoStreamBtn.text = _isStreaming ? "Stop Stream" : "Start Stream";
+        Debug.Log($"[Controller] Camera {endpoint} OK");
     }
 }

@@ -1,8 +1,11 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
     <Style src="project://database/Assets/UI/ControlPanel.uss?fileID=7433441132597879392&amp;guid=4910d1baccd34cc41a26db2ed63fbae7&amp;type=3#ControlPanel"/>
-    <ui:VisualElement name="root" style="flex-direction: column; justify-content: space-between; padding: 20px; background-color: rgba(0, 0, 0, 0.75); width: 100%; height: 100%;">
-        <ui:TextField name="ip-field" label="IP Address" value="test-pi" style="font-size: 16px; height: 30px;"/>
+    <ui:VisualElement name="root" class="control-panel">
+        <ui:VisualElement class="enable-container">
+            <ui:Button text="Stream Video" name="video-stream-btn" emoji-fallback-support="false"/>
+        </ui:VisualElement>
+        <ui:TextField name="ip-field" label="IP Address" value="test-pi" class="tf"/>
         <ui:Button name="connect-btn" text="Connect" class="bs"/>
-        <ui:Label name="status-label" text="Disconnected" style="font-size: 16px; color: rgb(200, 200, 200); -unity-text-align: middle-center;"/>
+        <ui:Label name="status-label" text="Disconnected" class="status"/>
     </ui:VisualElement>
 </ui:UXML>
