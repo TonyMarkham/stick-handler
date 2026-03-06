@@ -2,39 +2,30 @@
 
 Command-line interface for programmatic interaction with the Blazor Agile Board project management system. All operations sync in real-time with the Blazor UI through WebSocket broadcasts.
 
-## CRITICAL: Use `$PM` for Every Command
-
-`PM` is pre-set as an environment variable in `.claude/settings.local.json` and points directly to the correct binary for this project. **Do not set it yourself. Do not guess the path. Do not use `./pm` or any other path.**
-
-Just use it:
-
-```bash
-$PM <command>
-```
-
-**If `$PM` is empty or unset**, stop immediately and tell the user — do not attempt to locate or construct the path yourself.
-
 ## Quick Reference
 
-**Binary:** `$PM` (pre-set via `.claude/settings.local.json`)
+**Binary location:** `pm` (macOS/Linux shell script) or `pm.bat` (Windows batch file), in the **repository root**.
 
-**Invocation:** `$PM <command> [options] [--pretty]`
+Examples use `./pm` (bash). On Windows use `pm.bat` instead.
+
+**Invocation:** `./pm <command> [options] [--pretty]`
 
 **Global options:**
 - `--server <URL>` — Server URL (default: auto-discovered from `.pm/server.json`)
 - `--user-id <UUID>` — User ID (default: LLM user from `.pm/config.toml`)
 - `--pretty` — Pretty-print JSON output (recommended)
-- `--output-toml <PATH>` — Write response to a TOML file (stdout still receives JSON)
+
+**IMPORTANT:** The `pm` and `pm.bat` scripts are in the **repository root**, not in the skill directory. The skill directory only contains this documentation.
 
 ## STOP — Read This Before Running Commands
 
 **`work-item create --parent-id` does NOT resolve display keys.** It requires a UUID. The recommended pattern for creating hierarchies is to capture UUIDs from previous commands:
 
 ```bash
-EPIC=$($PM work-item create --project-id "$PROJECT_ID" --type epic --title "My Epic" --pretty)
+EPIC=$(./pm work-item create --project-id "$PROJECT_ID" --type epic --title "My Epic" --pretty)
 EPIC_ID=$(echo "$EPIC" | jq -r '.work_item.id')
 
-$PM work-item create --project-id "$PROJECT_ID" --type task \
+./pm work-item create --project-id "$PROJECT_ID" --type task \
   --parent-id "$EPIC_ID" --title "My Task" --pretty
 ```
 
@@ -54,24 +45,24 @@ The CLI automatically resolves:
 
 ```bash
 # Get a work item by display key instead of UUID
-$PM work-item get PONE-123 --pretty
+./pm work-item get PONE-123 --pretty
 
 # List work items using project key
-$PM work-item list PONE --pretty
+./pm work-item list PONE --pretty
 
 # Update work item status using display key
-$PM work-item update PONE-123 \
+./pm work-item update PONE-123 \
   --version 1 \
   --status in_progress --pretty
 
 # Create dependency between work items using display keys
-$PM dependency create \
+./pm dependency create \
   --blocking PONE-123 \
   --blocked PONE-124 \
   --type blocks --pretty
 
 # Export a work item using display key
-$PM sync export work-item PONE-123 \
+./pm sync export work-item PONE-123 \
   --descendant-levels 2 --comments --pretty
 ```
 
@@ -123,20 +114,20 @@ Use the pm-cli when you need to:
 
 ```bash
 # List all projects
-$PM project list [--pretty]
+./pm project list [--pretty]
 
 # Get a specific project by ID
-$PM project get <project-id> [--pretty]
+./pm project get <project-id> [--pretty]
 
 # Create a new project
-$PM project create \
+./pm project create \
   --title "Project Title" \
   --key "PROJ" \
   [--description "Project description"] \
   [--pretty]
 
 # Update a project
-$PM project update <project-id> \
+./pm project update <project-id> \
   --expected-version <current-version> \
   [--title "New title"] \
   [--description "New description"] \
@@ -144,7 +135,7 @@ $PM project update <project-id> \
   [--pretty]
 
 # Delete a project
-$PM project delete <project-id> [--pretty]
+./pm project delete <project-id> [--pretty]
 ```
 
 **Valid statuses:** `active`, `archived`
@@ -153,7 +144,7 @@ $PM project delete <project-id> [--pretty]
 
 ```bash
 # List work items in a project (with optional filters)
-$PM work-item list <project-id> \
+./pm work-item list <project-id> \
   [--type <epic|story|task>] \
   [--status <status>] \
   [--parent-id <uuid>] \
@@ -163,25 +154,21 @@ $PM work-item list <project-id> \
   [--pretty]
 
 # Get a specific work item
-$PM work-item get <work-item-id> [--pretty]
+./pm work-item get <work-item-id> [--pretty]
 
 # Create a new work item
-$PM work-item create \
-  [--project-id <uuid>] \
-  [--type <epic|story|task>] \
-  [--title "Title"] \
+./pm work-item create \
+  --project-id <uuid> \
+  --type <epic|story|task> \
+  --title "Title" \
   [--description "Description"] \
   [--parent-id <uuid>] \
   [--status <backlog|todo|in_progress|review|done|blocked>] \
   [--priority <low|medium|high|critical>] \
-  [--from-toml <PATH>] \
   [--pretty]
 
-# Note: --project-id, --type, and --title are required but can come
-# from the --from-toml file instead of the CLI.
-
 # Update a work item
-$PM work-item update <work-item-id> \
+./pm work-item update <work-item-id> \
   --version <current-version> \
   [--title "New title"] \
   [--description "New description"] \
@@ -193,13 +180,10 @@ $PM work-item update <work-item-id> \
   [--parent-id <uuid>] \
   [--update-parent] \
   [--position <int>] \
-  [--from-toml <PATH>] \
   [--pretty]
 
-# Note: --version must always be on the CLI (not in the TOML file).
-
 # Delete a work item
-$PM work-item delete <work-item-id> [--pretty]
+./pm work-item delete <work-item-id> [--pretty]
 ```
 
 **Valid statuses:** `backlog`, `todo`, `in_progress`, `review`, `done`, `blocked`
@@ -212,13 +196,13 @@ $PM work-item delete <work-item-id> [--pretty]
 
 ```bash
 # List sprints in a project
-$PM sprint list <project-id> [--pretty]
+./pm sprint list <project-id> [--pretty]
 
 # Get a specific sprint
-$PM sprint get <sprint-id> [--pretty]
+./pm sprint get <sprint-id> [--pretty]
 
 # Create a new sprint
-$PM sprint create \
+./pm sprint create \
   --project-id <uuid> \
   --name "Sprint Name" \
   --start-date <unix-timestamp> \
@@ -227,7 +211,7 @@ $PM sprint create \
   [--pretty]
 
 # Update a sprint
-$PM sprint update <sprint-id> \
+./pm sprint update <sprint-id> \
   --expected-version <current-version> \
   [--name "New name"] \
   [--goal "New goal"] \
@@ -237,77 +221,77 @@ $PM sprint update <sprint-id> \
   [--pretty]
 
 # Delete a sprint
-$PM sprint delete <sprint-id> [--pretty]
+./pm sprint delete <sprint-id> [--pretty]
 ```
 
 ### Comment Commands
 
 ```bash
 # List comments on a work item
-$PM comment list <work-item-id> [--pretty]
+./pm comment list <work-item-id> [--pretty]
 
 # Create a comment
-$PM comment create \
+./pm comment create \
   --work-item-id <uuid> \
   --content "Comment text" \
   [--pretty]
 
 # Update a comment
-$PM comment update <comment-id> \
+./pm comment update <comment-id> \
   --content "Updated text" \
   [--pretty]
 
 # Delete a comment
-$PM comment delete <comment-id> [--pretty]
+./pm comment delete <comment-id> [--pretty]
 ```
 
 ### Dependency Commands
 
 ```bash
 # List dependencies for a work item
-$PM dependency list <work-item-id> [--pretty]
+./pm dependency list <work-item-id> [--pretty]
 
 # Create a dependency link
-$PM dependency create \
+./pm dependency create \
   --blocking <work-item-id> \
   --blocked <work-item-id> \
   --type <blocks|relates_to> \
   [--pretty]
 
 # Delete a dependency
-$PM dependency delete <dependency-id> [--pretty]
+./pm dependency delete <dependency-id> [--pretty]
 ```
 
 ### Time Entry Commands
 
 ```bash
 # List time entries for a work item
-$PM time-entry list <work-item-id> [--pretty]
+./pm time-entry list <work-item-id> [--pretty]
 
 # Get a specific time entry
-$PM time-entry get <time-entry-id> [--pretty]
+./pm time-entry get <time-entry-id> [--pretty]
 
 # Start a timer on a work item
-$PM time-entry create \
+./pm time-entry create \
   --work-item-id <uuid> \
   [--description "What you're working on"] \
   [--pretty]
 
 # Stop a running timer or update description
-$PM time-entry update <time-entry-id> \
+./pm time-entry update <time-entry-id> \
   [--stop] \
   [--description "Updated description"] \
   [--pretty]
 
 # Delete a time entry
-$PM time-entry delete <time-entry-id> [--pretty]
+./pm time-entry delete <time-entry-id> [--pretty]
 ```
 
 ### Swim Lane Commands
 
 ```bash
 # List swim lanes for a project (read-only)
-$PM swim-lane list <project-id> [--pretty]
+./pm swim-lane list <project-id> [--pretty]
 ```
 
 **Note:** Swim lanes are read-only via CLI. Use the Blazor UI to create/update/delete swim lanes.
@@ -316,10 +300,10 @@ $PM swim-lane list <project-id> [--pretty]
 
 ```bash
 # Export all data to JSON
-$PM sync export [-o|--output <file>] [--pretty]
+./pm sync export [-o|--output <file>] [--pretty]
 
 # Export a specific work item (scoped export)
-$PM sync export [-o|--output <file>] work-item <work-item-id> \
+./pm sync export [-o|--output <file>] work-item <work-item-id> \
   [--descendant-levels <0-2>] \
   [--comments] \
   [--sprints] \
@@ -328,7 +312,7 @@ $PM sync export [-o|--output <file>] work-item <work-item-id> \
   [--pretty]
 
 # Import data from JSON file
-$PM sync import -f|--file <json-file> [--pretty]
+./pm sync import -f|--file <json-file> [--pretty]
 ```
 
 **Scoped export flags:**
@@ -344,7 +328,7 @@ Without flags, scoped export returns only the work item itself. The response use
 
 ```bash
 # Launch the Tauri desktop application
-$PM desktop
+./pm desktop
 ```
 
 ## Usage Patterns
@@ -353,13 +337,13 @@ $PM desktop
 
 ```bash
 # 1. Create project
-PROJECT=$($PM project create \
+PROJECT=$(./pm project create \
   --title "My Project" --key "MP" \
   --description "Project description" --pretty)
 PROJECT_ID=$(echo "$PROJECT" | jq -r '.project.id')
 
 # 2. Create a 2-week sprint
-SPRINT=$($PM sprint create \
+SPRINT=$(./pm sprint create \
   --project-id "$PROJECT_ID" \
   --name "Sprint 1" \
   --start-date $(date +%s) \
@@ -368,14 +352,14 @@ SPRINT=$($PM sprint create \
 SPRINT_ID=$(echo "$SPRINT" | jq -r '.sprint.id')
 
 # 3. Create epic → task hierarchy
-EPIC=$($PM work-item create \
+EPIC=$(./pm work-item create \
   --project-id "$PROJECT_ID" --type epic \
   --title "User Authentication" \
   --description "Implement complete auth system" \
   --priority high --pretty)
 EPIC_ID=$(echo "$EPIC" | jq -r '.work_item.id')
 
-TASK=$($PM work-item create \
+TASK=$(./pm work-item create \
   --project-id "$PROJECT_ID" --type task \
   --parent-id "$EPIC_ID" \
   --title "Implement OAuth2 login" \
@@ -384,7 +368,7 @@ TASK_ID=$(echo "$TASK" | jq -r '.work_item.id')
 TASK_VERSION=$(echo "$TASK" | jq -r '.work_item.version')
 
 # 4. Assign to sprint, start work
-TASK=$($PM work-item update "$TASK_ID" \
+TASK=$(./pm work-item update "$TASK_ID" \
   --version $TASK_VERSION \
   --sprint-id "$SPRINT_ID" \
   --status in_progress \
@@ -392,18 +376,18 @@ TASK=$($PM work-item update "$TASK_ID" \
 TASK_VERSION=$(echo "$TASK" | jq -r '.work_item.version')
 
 # 5. Timer + comment
-TIMER=$($PM time-entry create \
+TIMER=$(./pm time-entry create \
   --work-item-id "$TASK_ID" \
   --description "Working on OAuth implementation" --pretty)
 TIMER_ID=$(echo "$TIMER" | jq -r '.time_entry.id')
 
-$PM comment create \
+./pm comment create \
   --work-item-id "$TASK_ID" \
   --content "Started implementation, setting up OAuth provider" --pretty
 
 # 6. Finish up
-$PM time-entry update "$TIMER_ID" --stop --pretty
-$PM work-item update "$TASK_ID" --version $TASK_VERSION --status done --pretty
+./pm time-entry update "$TIMER_ID" --stop --pretty
+./pm work-item update "$TASK_ID" --version $TASK_VERSION --status done --pretty
 ```
 
 ### Reparenting Work Items
@@ -412,19 +396,19 @@ Move work items between parents or orphan them using `--parent-id` with `--updat
 
 ```bash
 # Move an orphan task under a story
-$PM work-item update "$TASK_ID" \
+./pm work-item update "$TASK_ID" \
   --version "$VERSION" \
   --parent-id "$STORY_ID" \
   --update-parent --pretty
 
 # Move a task from one story to another
-$PM work-item update "$TASK_ID" \
+./pm work-item update "$TASK_ID" \
   --version "$VERSION" \
   --parent-id "$NEW_STORY_ID" \
   --update-parent --pretty
 
 # Orphan a task (remove its parent)
-$PM work-item update "$TASK_ID" \
+./pm work-item update "$TASK_ID" \
   --version "$VERSION" \
   --parent-id "" \
   --update-parent --pretty
@@ -436,131 +420,39 @@ $PM work-item update "$TASK_ID" \
 
 ```bash
 # Children of a specific parent
-$PM work-item list "$PROJECT_ID" --parent-id "$EPIC_ID" --pretty
+./pm work-item list "$PROJECT_ID" --parent-id "$EPIC_ID" --pretty
 
 # Orphaned items (no parent) — useful for finding misplaced work items
-$PM work-item list "$PROJECT_ID" --orphaned --pretty
+./pm work-item list "$PROJECT_ID" --orphaned --pretty
 
 # Orphaned stories specifically
-$PM work-item list "$PROJECT_ID" --orphaned --type story --pretty
+./pm work-item list "$PROJECT_ID" --orphaned --type story --pretty
 
 # All descendants recursively (stories + their tasks)
-$PM work-item list "$PROJECT_ID" --descendants-of "$EPIC_ID" --pretty
+./pm work-item list "$PROJECT_ID" --descendants-of "$EPIC_ID" --pretty
 
 # Just the tasks in an epic's entire tree
-$PM work-item list "$PROJECT_ID" --descendants-of "$EPIC_ID" --type task --pretty
+./pm work-item list "$PROJECT_ID" --descendants-of "$EPIC_ID" --type task --pretty
 
 # Combine with status filter
-$PM work-item list "$PROJECT_ID" --parent-id "$EPIC_ID" --status in_progress --pretty
+./pm work-item list "$PROJECT_ID" --parent-id "$EPIC_ID" --status in_progress --pretty
 ```
 
 ### Scoped Export
 
 ```bash
 # Epic with full tree and all related data
-$PM sync export -o epic.json work-item "$EPIC_ID" \
+./pm sync export -o epic.json work-item "$EPIC_ID" \
   --descendant-levels 2 \
   --comments --sprints --dependencies --time-entries --pretty
 
 # Story with child tasks and comments
-$PM sync export -o story.json work-item "$STORY_ID" \
+./pm sync export -o story.json work-item "$STORY_ID" \
   --descendant-levels 1 --comments --pretty
 
 # Single work item only (no related data)
-$PM sync export work-item "$WORK_ITEM_ID" --pretty
+./pm sync export work-item "$WORK_ITEM_ID" --pretty
 ```
-
-### Saving Output to a TOML File
-
-Use `--output-toml <PATH>` on **any command** to write the response as TOML to a file.
-Stdout still receives JSON — jq pipelines are unaffected.
-
-```bash
-# Save project list to TOML
-$PM project list --output-toml /tmp/projects.toml
-
-# Save and pipe to jq simultaneously
-$PM work-item list PONE --output-toml /tmp/items.toml | jq '.work_items | length'
-
-# Save a full scoped export
-$PM sync export work-item PONE-42 \
-  --descendant-levels 2 --comments \
-  --output-toml /tmp/epic-context.toml --pretty
-```
-
-**Why TOML?** TOML handles markdown content (descriptions with backticks, code blocks)
-as multiline strings. Null fields (unset assignee, sprint, etc.) are automatically omitted.
-
-### Creating and Updating Work Items from TOML
-
-Use `--from-toml <PATH>` to load work item fields from a TOML file.
-CLI flags always override TOML values. Best for descriptions with markdown.
-
-**TOML file schema (`item.toml`):**
-
-```toml
-# Required for create (can be on CLI instead)
-project_id = "8d96310e-1e69-4dc5-9529-5c173674ab90"
-type = "task"
-title = "My Work Item"
-
-# Multi-line description — backticks and code blocks work natively
-description = """
-## Summary
-
-Implement the handler in `src/api.rs`.
-
-```rust
-pub async fn handle(State(db): State<DbPool>) -> Result<Json<Item>> {
-    let item = db.get().await?;
-    Ok(Json(item))
-}
-```
-
-All existing tests must pass.
-"""
-
-# Optional fields
-status = "todo"
-priority = "high"
-
-# Update-only fields (silently ignored when used with work-item create)
-assignee_id  = "uuid-here"   # omit entirely to leave unchanged
-sprint_id    = "uuid-here"   # omit entirely to leave unchanged
-story_points = 5             # integer 0-100
-position     = 3             # non-negative integer for ordering
-```
-
-**Create from TOML file:**
-
-```bash
-$PM work-item create --from-toml ./item.toml --pretty
-
-# CLI flag overrides TOML field
-$PM work-item create --from-toml ./item.toml --priority critical --pretty
-```
-
-**Round-trip edit workflow (get → edit → update, no jq needed):**
-
-`--output-toml` produces a file you can edit directly and feed straight back
-into `--from-toml`. The `[work_item]` wrapper and all server-only fields
-(`id`, `created_at`, `version`, etc.) are automatically handled — just edit
-the fields you want to change and pass the same file to update.
-
-```bash
-# 1. Fetch — saves full work item as TOML (version is in the file)
-$PM work-item get PONE-42 --output-toml /tmp/pone42.toml
-
-# 2. Edit /tmp/pone42.toml — change title, description, status, etc.
-#    (Use the Edit tool — no shell permissions needed)
-
-# 3. Push — read version from the file, pass the same file back
-$PM work-item update PONE-42 --version N --from-toml /tmp/pone42.toml --pretty
-```
-
-**`--version` must always be on the CLI** — read it from the `version` field
-in the TOML file. The file itself is not re-written by update; fetch again
-if you need the new version for a subsequent update.
 
 ## Response Format
 
@@ -597,11 +489,11 @@ Deleting destroys: dependency links, comments, time entries, sprint assignments,
 
 ```bash
 # WRONG — destroys all associated data
-$PM work-item delete "$TASK_ID"
-$PM work-item create --project-id "$PROJECT_ID" --type task --title "Fixed title" ...
+./pm work-item delete "$TASK_ID"
+./pm work-item create --project-id "$PROJECT_ID" --type task --title "Fixed title" ...
 
 # CORRECT — preserves all relationships and history
-$PM work-item update "$TASK_ID" --version "$VERSION" --title "Fixed title" --description "Fixed description"
+./pm work-item update "$TASK_ID" --version "$VERSION" --title "Fixed title" --description "Fixed description"
 ```
 
 Only delete a work item if it was created in error and has no dependencies, comments, or other references.
@@ -612,8 +504,8 @@ Only delete a work item if it was created in error and has no dependencies, comm
 
 `work-item list` excludes items with status `done` by default. Add `--include-done` to see them:
 ```bash
-$PM work-item list "$PROJECT_ID" --pretty              # active items only
-$PM work-item list "$PROJECT_ID" --include-done --pretty  # include completed
+./pm work-item list "$PROJECT_ID" --pretty              # active items only
+./pm work-item list "$PROJECT_ID" --include-done --pretty  # include completed
 ```
 
 ### Optimistic Locking
@@ -621,8 +513,8 @@ $PM work-item list "$PROJECT_ID" --include-done --pretty  # include completed
 Work item, project, and sprint updates require a version parameter (`--version` or `--expected-version`) matching the current version. On mismatch you get a `CONFLICT` error. Always fetch the latest version before updating:
 
 ```bash
-VERSION=$($PM work-item get "$TASK_ID" --pretty | jq -r '.work_item.version')
-$PM work-item update "$TASK_ID" --version "$VERSION" --status in_progress --pretty
+VERSION=$(./pm work-item get "$TASK_ID" --pretty | jq -r '.work_item.version')
+./pm work-item update "$TASK_ID" --version "$VERSION" --status in_progress --pretty
 ```
 
 ### Quoting Descriptions
@@ -634,7 +526,7 @@ Descriptions containing backticks, quotes, or code blocks require careful shell 
 - **Backticks AND shell variables:** use heredoc with single-quoted delimiter:
 
 ````bash
-$PM work-item create \
+./pm work-item create \
   --project-id "$PROJECT_ID" \
   --type task \
   --title "My task" \

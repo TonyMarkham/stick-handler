@@ -1,6 +1,13 @@
 {
   "dependencies": {
     "com.endel.nativewebsocket": "https://github.com/endel/NativeWebSocket.git#upm",
+    "com.meta.xr.mrutilitykit": "85.0.0",
+    "com.meta.xr.sdk.audio": "85.0.0",
+    "com.meta.xr.sdk.core": "85.0.0",
+    "com.meta.xr.sdk.haptics": "85.0.0",
+    "com.meta.xr.sdk.interaction": "85.0.0",
+    "com.meta.xr.sdk.interaction.ovr": "85.0.0",
+    "com.meta.xr.sdk.platform": "85.0.0",
     "com.unity.ide.rider": "3.0.39",
     "com.unity.ide.visualstudio": "2.0.27",
     "com.unity.inputsystem": "1.18.0",
@@ -9,6 +16,8 @@
     "com.unity.render-pipelines.universal": "17.3.0",
     "com.unity.test-framework": "1.6.0",
     "com.unity.webrtc": "3.0.0",
+    "com.unity.xr.management": "4.5.4",
+    "com.unity.xr.openxr": "1.16.1",
     "com.unity.modules.accessibility": "1.0.0",
     "com.unity.modules.adaptiveperformance": "1.0.0",
     "com.unity.modules.ai": "1.0.0",

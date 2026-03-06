@@ -8,6 +8,12 @@ pm.bat
 /Unity/stick-handle/*.csproj
 /Unity/stick-handle/*.sln
 
+# Unity third-party SDKs — do not commit
+/Unity/stick-handle/Assets/Oculus/
+/Unity/stick-handle/Assets/Oculus.meta
+/Unity/stick-handle/Assets/XR/
+/Unity/stick-handle/Assets/XR.meta
+
 # Unity runtime/cache — do not commit
 /Unity/stick-handle/Library/
 /Unity/stick-handle/Logs/
