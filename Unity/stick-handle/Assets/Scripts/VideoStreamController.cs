@@ -443,7 +443,10 @@ public class VideoStreamController : MonoBehaviour
         }
 
         if (_videoFeedRT != null)
+        {
+            Graphics.Blit(Texture2D.blackTexture, _videoFeedRT);
             RenderTexture.active = null;
+        }
         // _connectBtn may be null if OnEnable found a missing element
         if (_connectBtn != null)
             _connectBtn.text = "Connect";
@@ -460,31 +463,76 @@ public class VideoStreamController : MonoBehaviour
     
     private void HandleStreamingToggle()
     {
+        if (_toggleInProgress) return;
         _toggleStreamingCoroutine = StartCoroutine(ToggleVideoStreaming());
     }
-    
+
+    private bool _toggleInProgress;
+
     private IEnumerator ToggleVideoStreaming()
     {
+        _toggleInProgress = true;
+        if (_videoStreamBtn != null) _videoStreamBtn.SetEnabled(false);
+
         string host = (_ipField != null && !string.IsNullOrWhiteSpace(_ipField.value))
             ? _ipField.value.Trim()
             : _videoFeedURL;
 
-        string endpoint = _isStreaming ? "stop" : "start";
-        string url = $"http://{host}:8080/camera/{endpoint}";
-
-        using var req = new UnityWebRequest(url, UnityWebRequest.kHttpVerbPOST);
-        req.downloadHandler = new DownloadHandlerBuffer();
-        yield return req.SendWebRequest();
-
-        if (req.result != UnityWebRequest.Result.Success)
+        if (_isStreaming)
         {
-            Debug.LogError($"[Controller] Camera {endpoint} failed: {req.error}");
-            yield break;
+            // 1. Stop WebRTC
+            Disconnect();
+
+            // 2. Stop camera — wait for server confirmation
+            using var stopReq = new UnityWebRequest($"http://{host}:8080/camera/stop", UnityWebRequest.kHttpVerbPOST);
+            stopReq.downloadHandler = new DownloadHandlerBuffer();
+            yield return stopReq.SendWebRequest();
+
+            if (stopReq.result != UnityWebRequest.Result.Success)
+                Debug.LogError($"[Controller] Camera stop failed: {stopReq.error}");
+            else
+                Debug.Log("[Controller] Camera stopped");
+
+            _isStreaming = false;
+            if (_videoStreamBtn != null) _videoStreamBtn.text = "Start Stream";
+            if (_videoFeedRT != null) Graphics.Blit(Texture2D.blackTexture, _videoFeedRT);
+        }
+        else
+        {
+            // 1. Start camera — wait for server confirmation
+            using var startReq = new UnityWebRequest($"http://{host}:8080/camera/start", UnityWebRequest.kHttpVerbPOST);
+            startReq.downloadHandler = new DownloadHandlerBuffer();
+            yield return startReq.SendWebRequest();
+
+            if (startReq.result != UnityWebRequest.Result.Success)
+            {
+                Debug.LogError($"[Controller] Camera start failed: {startReq.error}");
+            }
+            else
+            {
+                Debug.Log("[Controller] Camera started — connecting WebRTC...");
+
+                // 2. Connect WebRTC
+                _connectCoroutine = StartCoroutine(Connect());
+                yield return _connectCoroutine;
+
+                if (_connected)
+                {
+                    _isStreaming = true;
+                    if (_videoStreamBtn != null) _videoStreamBtn.text = "Stop Stream";
+                }
+                else
+                {
+                    // WebRTC failed — roll camera back
+                    using var rollbackReq = new UnityWebRequest($"http://{host}:8080/camera/stop", UnityWebRequest.kHttpVerbPOST);
+                    rollbackReq.downloadHandler = new DownloadHandlerBuffer();
+                    yield return rollbackReq.SendWebRequest();
+                    Debug.Log("[Controller] Camera rolled back after WebRTC failure");
+                }
+            }
         }
 
-        _isStreaming = !_isStreaming;
-        if (_videoStreamBtn != null)
-            _videoStreamBtn.text = _isStreaming ? "Stop Stream" : "Start Stream";
-        Debug.Log($"[Controller] Camera {endpoint} OK");
+        if (_videoStreamBtn != null) _videoStreamBtn.SetEnabled(true);
+        _toggleInProgress = false;
     }
 }
