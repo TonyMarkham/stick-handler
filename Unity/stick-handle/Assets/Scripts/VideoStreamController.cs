@@ -17,7 +17,6 @@ public class VideoStreamController : MonoBehaviour
     [Header("Video")] [SerializeField] private RenderTexture _videoFeedRT;
 
     // UI Toolkit element references (queried in OnEnable)
-    private Button _videoStreamBtn;
     private bool _isStreaming;
     private Coroutine _toggleStreamingCoroutine;
     
@@ -94,7 +93,6 @@ public class VideoStreamController : MonoBehaviour
 
         _ipField = root.Q<TextField>("ip-field");
         _connectBtn = root.Q<Button>("connect-btn");
-        _videoStreamBtn = root.Q<Button>("video-stream-btn");
         _statusLabel = root.Q<Label>("status-label");
 
         // BUG7: Q<T>() returns null on name mismatch — guard before use.
@@ -109,12 +107,6 @@ public class VideoStreamController : MonoBehaviour
             Debug.LogError("[Controller] 'connect-btn' not found in UXML");
             return;
         }
-        
-        if (_videoStreamBtn == null)
-        {
-            Debug.LogError("[Controller] 'video-stream-btn' not found in UXML");
-            return;
-        }
 
         if (_statusLabel == null)
         {
@@ -123,8 +115,7 @@ public class VideoStreamController : MonoBehaviour
         }
 
         _ipField.value = _videoFeedURL;
-        _connectBtn.clicked += OnConnectClicked;
-        _videoStreamBtn.clicked += HandleStreamingToggle;
+        _connectBtn.clicked += HandleStreamingToggle;
     }
 
     private void OnDisable()
@@ -140,10 +131,7 @@ public class VideoStreamController : MonoBehaviour
 
         // BUG7: null-guard for symmetry with null-checked OnEnable
         if (_connectBtn != null)
-            _connectBtn.clicked -= OnConnectClicked;
-        
-        if (_videoStreamBtn != null)
-            _videoStreamBtn.clicked -= HandleStreamingToggle;
+            _connectBtn.clicked -= HandleStreamingToggle;
     }
 
     private void Update()
@@ -472,7 +460,6 @@ public class VideoStreamController : MonoBehaviour
     private IEnumerator ToggleVideoStreaming()
     {
         _toggleInProgress = true;
-        if (_videoStreamBtn != null) _videoStreamBtn.SetEnabled(false);
 
         string host = (_ipField != null && !string.IsNullOrWhiteSpace(_ipField.value))
             ? _ipField.value.Trim()
@@ -494,7 +481,6 @@ public class VideoStreamController : MonoBehaviour
                 Debug.Log("[Controller] Camera stopped");
 
             _isStreaming = false;
-            if (_videoStreamBtn != null) _videoStreamBtn.text = "Start Stream";
             if (_videoFeedRT != null) Graphics.Blit(Texture2D.blackTexture, _videoFeedRT);
         }
         else
@@ -519,7 +505,6 @@ public class VideoStreamController : MonoBehaviour
                 if (_connected)
                 {
                     _isStreaming = true;
-                    if (_videoStreamBtn != null) _videoStreamBtn.text = "Stop Stream";
                 }
                 else
                 {
@@ -531,8 +516,7 @@ public class VideoStreamController : MonoBehaviour
                 }
             }
         }
-
-        if (_videoStreamBtn != null) _videoStreamBtn.SetEnabled(true);
+        
         _toggleInProgress = false;
     }
 }

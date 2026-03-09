@@ -52,10 +52,3 @@
     color: rgb(200, 200, 200);
     -unity-text-align: middle-center;
 }
-
-.enable-container {
-    flex-direction: column;
-    justify-content: flex-start;
-    padding: 20px;
-    width: 100%;
-}
