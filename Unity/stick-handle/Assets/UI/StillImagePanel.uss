@@ -1,0 +1,19 @@
+.still-panel {
+    flex-direction: column;
+    background-color: rgba(0, 0, 0, 0.75);
+    width: 100%;
+    height: 100%;
+}
+
+.panel-label {
+    font-size: 14px;
+    color: whitesmoke;
+    -unity-text-align: middle-center;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.image-display {
+    flex-grow: 1;
+    -unity-background-scale-mode: scale-to-fit;
+}

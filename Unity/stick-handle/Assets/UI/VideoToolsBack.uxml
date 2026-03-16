@@ -1,0 +1,6 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/CalibrationMenu.uss"/>
+    <ui:VisualElement name="root" class="back-panel">
+        <ui:Button name="back-btn" text="← Back" class="bs back-btn" />
+    </ui:VisualElement>
+</ui:UXML>

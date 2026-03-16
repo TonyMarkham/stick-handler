@@ -1,0 +1,8 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/CalibrationMenu.uss"/>
+    <ui:VisualElement name="root" class="cal-menu">
+        <ui:Label text="Calibration" class="title" />
+        <ui:Button name="video-btn" text="Video Tools" class="bs menu-btn" />
+        <ui:Button name="hsv-btn" text="HSV Filter" class="bs menu-btn" />
+    </ui:VisualElement>
+</ui:UXML>

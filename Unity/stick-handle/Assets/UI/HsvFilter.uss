@@ -1,0 +1,114 @@
+:root {
+    --btn-height: 30px;
+}
+
+.hsv-panel {
+    flex-direction: column;
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.75);
+    width: 100%;
+    height: 100%;
+}
+
+/* ── Header ─────────────────────────────────────── */
+
+.header-row {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.title {
+    font-size: 16px;
+    color: whitesmoke;
+    margin-left: 8px;
+}
+
+/* ── Controls row ────────────────────────────────── */
+
+.controls-row {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.tf {
+    font-size: 14px;
+    height: var(--btn-height);
+    flex-shrink: 0;
+    max-width: 120px;
+}
+
+.tf Label {
+    min-width: 16px;
+    max-width: 20px;
+    color: whitesmoke;
+    font-size: 14px;
+}
+
+.tf TextElement {
+    font-size: 14px;
+}
+
+.tf #unity-text-input {
+    padding: 2px;
+}
+
+.status {
+    font-size: 12px;
+    color: rgb(200, 200, 200);
+    margin-left: 6px;
+    flex-shrink: 1;
+    white-space: normal;
+}
+
+/* ── Buttons ─────────────────────────────────────── */
+
+.bs {
+    font-size: 14px;
+    height: var(--btn-height);
+    background-color: rgba(0, 120, 215, 0.9);
+    color: white;
+    border-radius: 6px;
+    margin: 0 4px;
+    flex-shrink: 0;
+}
+
+.bs:hover {
+    background-color: rgb(200, 20, 20);
+}
+
+.bs:active {
+    background-color: rgb(32, 200, 20);
+}
+
+.back-btn {
+    width: 60px;
+    font-size: 13px;
+}
+
+/* ── Sliders ─────────────────────────────────────── */
+
+.sliders-col {
+    flex-direction: column;
+}
+
+.slider {
+    margin: 2px 0;
+}
+
+.slider Label {
+    min-width: 44px;
+    max-width: 44px;
+    font-size: 12px;
+    color: whitesmoke;
+}
+
+.slider #unity-dragger {
+    background-color: rgba(0, 120, 215, 0.9);
+    border-radius: 3px;
+}
+
+.slider #unity-tracker {
+    background-color: rgba(255, 255, 255, 0.2);
+}

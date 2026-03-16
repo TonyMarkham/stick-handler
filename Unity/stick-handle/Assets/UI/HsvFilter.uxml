@@ -1,0 +1,29 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/HsvFilter.uss"/>
+    <ui:VisualElement name="root" class="hsv-panel">
+
+        <!-- Header -->
+        <ui:VisualElement name="header" class="header-row">
+            <ui:Button name="back-btn" text="← Back" class="bs back-btn" />
+            <ui:Label text="HSV Filter" class="title" />
+        </ui:VisualElement>
+
+        <!-- IP + Capture + Status -->
+        <ui:VisualElement name="controls" class="controls-row">
+            <ui:TextField name="ip-field" label="IP" value="test-pi" class="tf" />
+            <ui:Button name="capture-btn" text="Capture" class="bs" />
+            <ui:Label name="status-label" text="Press Capture to begin" class="status" />
+        </ui:VisualElement>
+
+        <!-- HSV Sliders -->
+        <ui:VisualElement name="sliders" class="sliders-col">
+            <ui:SliderInt name="h-min" label="H min" low-value="0" high-value="179" value="0"   show-input-field="true" class="slider" />
+            <ui:SliderInt name="h-max" label="H max" low-value="0" high-value="179" value="179" show-input-field="true" class="slider" />
+            <ui:SliderInt name="s-min" label="S min" low-value="0" high-value="255" value="0"   show-input-field="true" class="slider" />
+            <ui:SliderInt name="s-max" label="S max" low-value="0" high-value="255" value="255" show-input-field="true" class="slider" />
+            <ui:SliderInt name="v-min" label="V min" low-value="0" high-value="255" value="0"   show-input-field="true" class="slider" />
+            <ui:SliderInt name="v-max" label="V max" low-value="0" high-value="255" value="255" show-input-field="true" class="slider" />
+        </ui:VisualElement>
+
+    </ui:VisualElement>
+</ui:UXML>

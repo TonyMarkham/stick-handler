@@ -1,5 +1,6 @@
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring as nullable.
 
+using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Threading;
@@ -66,6 +67,21 @@ public class VideoStreamController : MonoBehaviour
     private readonly ConcurrentQueue<(string candidate, string? sdpMid, ushort? sdpMLineIndex)>
         _pendingIceCandidates = new();
 
+
+    private UIDocument m_UIDocument;
+    protected UIDocument uiDocument
+    {
+        get
+        {
+            if (m_UIDocument)
+                return m_UIDocument;
+            
+            m_UIDocument = GetComponent<UIDocument>();
+            return m_UIDocument;
+        }
+    }
+    
+
     // ── Unity Lifecycle ──────────────────────────────────────────────────
     private void OnEnable()
     {
@@ -82,8 +98,7 @@ public class VideoStreamController : MonoBehaviour
         // a controlled, logged early-return rather than an opaque NullReferenceException:
         //   Case 1 — element name mismatch → Q<>() returns null → caught by BUG7 guards.
         //   Case 2 — Panel Settings missing → rootVisualElement is null → caught here.
-        var doc = GetComponent<UIDocument>();
-        var root = doc.rootVisualElement;
+        var root = uiDocument.rootVisualElement;
         if (root == null)
         {
             Debug.LogError("[Controller] UIDocument.rootVisualElement is null — assign Panel Settings in Inspector");
