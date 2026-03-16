@@ -2,6 +2,7 @@ mod app_state;
 mod camera;
 mod camera_handle;
 pub mod error;
+mod still_handler;
 mod webrtc_handler;
 
 use app_state::AppState;
@@ -12,7 +13,7 @@ use axum::{
         {State, WebSocketUpgrade},
     },
     response::{Html, Response},
-    routing::get,
+    routing::{get, post},
 };
 use futures_util::{SinkExt, StreamExt};
 use signal_server::SignalMessage;
@@ -36,6 +37,10 @@ async fn main() {
     let app = Router::new()
         .route("/", get(index_handler))
         .route("/ws", get(ws_handler))
+        .route("/still/capture", post(still_handler::capture_handler))
+        .route("/still/original", get(still_handler::original_handler))
+        .route("/still/mask", get(still_handler::mask_handler))
+        .route("/still/overlay", get(still_handler::overlay_handler))
         .with_state(Arc::clone(&state));
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();
