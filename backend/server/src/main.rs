@@ -4,26 +4,24 @@ mod camera_handle;
 pub mod error;
 mod webrtc_handler;
 
-use app_state::{AppState, spawn_camera_monitor};
+use app_state::AppState;
 use axum::{
-    Json, Router,
+    Router,
     extract::{
         ws::{Message, WebSocket},
         {State, WebSocketUpgrade},
     },
-    http::StatusCode,
-    response::{Html, IntoResponse, Response},
-    routing::{get, post},
+    response::{Html, Response},
+    routing::get,
 };
 use futures_util::{SinkExt, StreamExt};
-use serde::Serialize;
 use signal_server::SignalMessage;
 use std::sync::Arc;
 use tokio::{
     signal::unix::{SignalKind, signal},
     sync::mpsc,
 };
-use tracing::{debug, error, info, warn};
+use tracing::{debug, info, warn};
 
 #[tokio::main]
 async fn main() {
@@ -35,14 +33,9 @@ async fn main() {
         "stun:stun.l.google.com:19302".to_owned(),
     ]));
 
-    // Camera starts idle — use POST /camera/start to begin streaming.
-
     let app = Router::new()
         .route("/", get(index_handler))
         .route("/ws", get(ws_handler))
-        .route("/camera/start", post(start_camera_handler))
-        .route("/camera/stop", post(stop_camera_handler))
-        .route("/camera/status", get(camera_status_handler))
         .with_state(Arc::clone(&state));
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();
@@ -52,12 +45,6 @@ async fn main() {
         .with_graceful_shutdown(shutdown_signal())
         .await
         .unwrap();
-
-    // Explicitly stop the camera on shutdown — prevents orphaned rpicam-vid process.
-    if let Some(handle) = state.camera.lock().await.take() {
-        info!("Stopping camera on shutdown");
-        handle.stop();
-    }
 }
 
 async fn index_handler() -> Html<&'static str> {
@@ -68,25 +55,7 @@ async fn ws_handler(ws: WebSocketUpgrade, State(state): State<Arc<AppState>>) ->
     ws.on_upgrade(move |socket| handle_socket(socket, state))
 }
 
-async fn handle_socket(mut socket: WebSocket, state: Arc<AppState>) {
-    // Hold the lock only long enough to clone the sender.
-    // Send a typed error to the client if the camera is not running.
-    let nal_rx = {
-        let guard = state.camera.lock().await;
-        match guard.as_ref() {
-            Some(handle) => handle.subscribe(),
-            None => {
-                warn!("WebRTC client connected but camera is not running");
-                let msg = serde_json::to_string(&SignalMessage::Error {
-                    message: "Camera is not running".to_owned(),
-                })
-                .unwrap_or_default();
-                let _ = socket.send(Message::Text(msg.into())).await;
-                return;
-            }
-        }
-    };
-
+async fn handle_socket(socket: WebSocket, state: Arc<AppState>) {
     let (ws_write, ws_read) = socket.split();
     let (out_tx, out_rx) = mpsc::unbounded_channel::<SignalMessage>();
     let (in_tx, in_rx) = mpsc::unbounded_channel::<SignalMessage>();
@@ -95,52 +64,10 @@ async fn handle_socket(mut socket: WebSocket, state: Arc<AppState>) {
     tokio::spawn(ws_write_task(ws_write, out_rx));
 
     if let Err(e) =
-        webrtc_handler::handle_peer_session(in_rx, out_tx, nal_rx, state.stun_urls.clone()).await
+        webrtc_handler::handle_peer_session(in_rx, out_tx, state.stun_urls.clone()).await
     {
         warn!("peer session error: {e}");
     }
-}
-
-async fn start_camera_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    // Hold the lock for the entire check-then-set to prevent TOCTOU.
-    let mut guard = state.camera.lock().await;
-    if guard.is_some() {
-        return (StatusCode::CONFLICT, "Camera already running");
-    }
-    match camera::start_camera(1920, 1080, 30) {
-        Ok((handle, task)) => {
-            *guard = Some(handle);
-            drop(guard); // release before spawning monitor (monitor re-acquires)
-            spawn_camera_monitor(task, Arc::clone(&state.camera));
-            info!("Camera started via API");
-            (StatusCode::OK, "Camera started")
-        }
-        Err(e) => {
-            error!("Failed to start camera: {e}");
-            (StatusCode::INTERNAL_SERVER_ERROR, "Failed to start camera")
-        }
-    }
-}
-
-async fn stop_camera_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    match state.camera.lock().await.take() {
-        Some(handle) => {
-            handle.stop();
-            info!("Camera stopped via API");
-            (StatusCode::OK, "Camera stopped")
-        }
-        None => (StatusCode::CONFLICT, "Camera not running"),
-    }
-}
-
-#[derive(Serialize)]
-struct CameraStatus {
-    running: bool,
-}
-
-async fn camera_status_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
-    let running = state.camera.lock().await.is_some();
-    Json(CameraStatus { running })
 }
 
 async fn ws_read_task(

@@ -5,7 +5,6 @@ using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.Networking;
 using UnityEngine.UIElements;
 using Unity.WebRTC;
 
@@ -461,62 +460,22 @@ public class VideoStreamController : MonoBehaviour
     {
         _toggleInProgress = true;
 
-        string host = (_ipField != null && !string.IsNullOrWhiteSpace(_ipField.value))
-            ? _ipField.value.Trim()
-            : _videoFeedURL;
-
         if (_isStreaming)
         {
-            // 1. Stop WebRTC
             Disconnect();
-
-            // 2. Stop camera — wait for server confirmation
-            using var stopReq = new UnityWebRequest($"http://{host}:8080/camera/stop", UnityWebRequest.kHttpVerbPOST);
-            stopReq.downloadHandler = new DownloadHandlerBuffer();
-            yield return stopReq.SendWebRequest();
-
-            if (stopReq.result != UnityWebRequest.Result.Success)
-                Debug.LogError($"[Controller] Camera stop failed: {stopReq.error}");
-            else
-                Debug.Log("[Controller] Camera stopped");
-
             _isStreaming = false;
             if (_videoFeedRT != null) Graphics.Blit(Texture2D.blackTexture, _videoFeedRT);
         }
         else
         {
-            // 1. Start camera — wait for server confirmation
-            using var startReq = new UnityWebRequest($"http://{host}:8080/camera/start", UnityWebRequest.kHttpVerbPOST);
-            startReq.downloadHandler = new DownloadHandlerBuffer();
-            yield return startReq.SendWebRequest();
+            // Camera starts automatically on the server when WebRTC negotiation begins.
+            _connectCoroutine = StartCoroutine(Connect());
+            yield return _connectCoroutine;
 
-            if (startReq.result != UnityWebRequest.Result.Success)
-            {
-                Debug.LogError($"[Controller] Camera start failed: {startReq.error}");
-            }
-            else
-            {
-                Debug.Log("[Controller] Camera started — connecting WebRTC...");
-
-                // 2. Connect WebRTC
-                _connectCoroutine = StartCoroutine(Connect());
-                yield return _connectCoroutine;
-
-                if (_connected)
-                {
-                    _isStreaming = true;
-                }
-                else
-                {
-                    // WebRTC failed — roll camera back
-                    using var rollbackReq = new UnityWebRequest($"http://{host}:8080/camera/stop", UnityWebRequest.kHttpVerbPOST);
-                    rollbackReq.downloadHandler = new DownloadHandlerBuffer();
-                    yield return rollbackReq.SendWebRequest();
-                    Debug.Log("[Controller] Camera rolled back after WebRTC failure");
-                }
-            }
+            if (_connected)
+                _isStreaming = true;
         }
-        
+
         _toggleInProgress = false;
     }
 }

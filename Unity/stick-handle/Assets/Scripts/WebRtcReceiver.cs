@@ -134,7 +134,7 @@ public class WebRtcReceiver : IDisposable
             yield break;
         }
 
-        Debug.Log("[WebRTC] Offer created — sending to server");
+        Debug.Log($"[WebRTC] Offer created — sending to server\n{desc.sdp}");
         onOfferCreated?.Invoke(desc.sdp);
     }
 

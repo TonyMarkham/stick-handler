@@ -7,45 +7,52 @@ use bytes::{BufMut, BytesMut};
 use std::sync::{Arc, Mutex as StdMutex};
 use tokio::{process::Command, sync::broadcast, task::JoinHandle};
 use tokio_util::io::SyncIoBridge;
-use webrtc_media::io::h264_reader::{H264Reader, NalUnitType};
+use webrtc_media::io::{
+    h264_reader::{H264Reader, NalUnitType},
+    ivf_reader::IVFReader,
+};
 
 const BROADCAST_CAPACITY: usize = 64;
 const H264_READER_BUF: usize = 1_048_576; // 1 MiB
+const IVF_READER_BUF: usize = 1_048_576; // 1 MiB
 const COMMAND: &str = "rpicam-vid";
-const CODEC: &str = "h264";
-const LIBAV_FORMAT: &str = "h264";
-const LIBAV_VIDEO_CODEC: &str = "h264_v4l2m2m";
 const TIMEOUT: &str = "0";
 const OUTPUT: &str = "-";
 
 /// Annex B start code that precedes every NAL unit in the stream
 const START_CODE: &[u8] = &[0x00, 0x00, 0x00, 0x01];
 
+/// Video codec to use for the camera stream.
+///
+/// Chosen per-session based on what the WebRTC client advertises in its SDP offer:
+/// - [`H264`]: hardware-accelerated 1080p30, for Quest 3 and NVIDIA Windows clients
+/// - [`Vp8`]: software-encoded 720p30 via libvpx, for AMD/Intel Windows clients
+#[derive(Debug, Clone, Copy)]
+pub enum VideoCodec {
+    H264,
+    Vp8,
+}
+
 /// Spawn `rpicam-vid` and return a [`CameraHandle`] for control plus a
 /// [`JoinHandle`] for lifecycle tracking.
 ///
-/// The [`JoinHandle`] resolves when the blocking read task exits — either
-/// because [`CameraHandle::stop`] was called or because the subprocess crashed.
-/// Pass it to [`crate::app_state::spawn_camera_monitor`] to keep shared state accurate.
-pub fn start_camera(
-    width: u32,
-    height: u32,
-    framerate: u32,
-) -> ServerResult<(CameraHandle, JoinHandle<()>)> {
-    let mut child = Command::new(COMMAND)
-        .args([
+/// Codec-specific parameters (resolution, encoder, container) are chosen
+/// automatically from the `codec` argument.
+pub fn start_camera(codec: VideoCodec) -> ServerResult<(CameraHandle, JoinHandle<()>)> {
+    let args: &[&str] = match codec {
+        VideoCodec::H264 => &[
             "--codec",
-            CODEC,
+            "h264",
             "--libav-format",
-            LIBAV_FORMAT,
+            "h264",
             "--libav-video-codec",
-            LIBAV_VIDEO_CODEC,
+            "h264_v4l2m2m",
             "--width",
-            &width.to_string(),
+            "1920",
             "--height",
-            &height.to_string(),
+            "1080",
             "--framerate",
-            &framerate.to_string(),
+            "30",
             "--inline",
             "--intra",
             "30",
@@ -53,7 +60,29 @@ pub fn start_camera(
             TIMEOUT,
             "--output",
             OUTPUT,
-        ])
+        ],
+        VideoCodec::Vp8 => &[
+            "--codec",
+            "libav",
+            "--libav-format",
+            "ivf",
+            "--libav-video-codec",
+            "libvpx-vp8",
+            "--width",
+            "1280",
+            "--height",
+            "720",
+            "--framerate",
+            "30",
+            "--timeout",
+            TIMEOUT,
+            "--output",
+            OUTPUT,
+        ],
+    };
+
+    let mut child = Command::new(COMMAND)
+        .args(args)
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::null())
         .spawn()
@@ -72,33 +101,56 @@ pub fn start_camera(
 
     let task = tokio::task::spawn_blocking(move || {
         // Keep child alive for the duration of the blocking task.
-        // When this guard drops, the Arc refcount falls and the Child is freed.
         let _child_guard = child_for_task;
-
         let bridge = SyncIoBridge::new(stdout);
-        let mut reader = H264Reader::new(bridge, H264_READER_BUF);
-        let mut access_unit = BytesMut::new();
 
-        loop {
-            match reader.next_nal() {
-                Ok(nal) => {
-                    let unit_type = nal.unit_type;
+        match codec {
+            VideoCodec::H264 => {
+                let mut reader = H264Reader::new(bridge, H264_READER_BUF);
+                let mut access_unit = BytesMut::new();
 
-                    access_unit.put_slice(START_CODE);
-                    access_unit.put_slice(&nal.data);
-
-                    match unit_type {
-                        NalUnitType::CodedSliceIdr | NalUnitType::CodedSliceNonIdr => {
-                            let frame = access_unit.split().freeze();
-                            tracing::trace!("access unit: {} bytes", frame.len());
-                            let _ = tx_clone.send(frame);
+                loop {
+                    match reader.next_nal() {
+                        Ok(nal) => {
+                            let unit_type = nal.unit_type;
+                            access_unit.put_slice(START_CODE);
+                            access_unit.put_slice(&nal.data);
+                            match unit_type {
+                                NalUnitType::CodedSliceIdr | NalUnitType::CodedSliceNonIdr => {
+                                    let frame = access_unit.split().freeze();
+                                    tracing::trace!("H264 access unit: {} bytes", frame.len());
+                                    let _ = tx_clone.send(frame);
+                                }
+                                _ => {}
+                            }
                         }
-                        _ => {}
+                        Err(e) => {
+                            tracing::error!("H264Reader error: {e}");
+                            break;
+                        }
                     }
                 }
-                Err(e) => {
-                    tracing::error!("H264Reader error: {e}");
-                    break;
+            }
+            VideoCodec::Vp8 => {
+                let (mut reader, _header) = match IVFReader::new(bridge, IVF_READER_BUF) {
+                    Ok(r) => r,
+                    Err(e) => {
+                        tracing::error!("IVFReader init error: {e}");
+                        return;
+                    }
+                };
+
+                loop {
+                    match reader.next_packet() {
+                        Ok((packet, _frame_header)) => {
+                            tracing::trace!("VP8 frame: {} bytes", packet.data.len());
+                            let _ = tx_clone.send(packet.data);
+                        }
+                        Err(e) => {
+                            tracing::error!("IVFReader error: {e}");
+                            break;
+                        }
+                    }
                 }
             }
         }

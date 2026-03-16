@@ -1,4 +1,8 @@
-use crate::error::{ServerResult, webrtc_error};
+use crate::{
+    camera,
+    camera::VideoCodec,
+    error::{ServerResult, webrtc_error},
+};
 
 use bytes::Bytes;
 use signal_server::SignalMessage;
@@ -9,7 +13,7 @@ use webrtc::{
     api::{
         APIBuilder,
         interceptor_registry::register_default_interceptors,
-        media_engine::{MIME_TYPE_H264, MediaEngine},
+        media_engine::{MIME_TYPE_H264, MIME_TYPE_VP8, MediaEngine},
     },
     ice_transport::{ice_candidate::RTCIceCandidateInit, ice_server::RTCIceServer},
     interceptor::registry::Registry,
@@ -36,21 +40,37 @@ fn h264_codec_capability() -> RTCRtpCodecCapability {
     }
 }
 
-pub async fn create_peer_connection(
+fn vp8_codec_capability() -> RTCRtpCodecCapability {
+    RTCRtpCodecCapability {
+        mime_type: MIME_TYPE_VP8.to_owned(),
+        clock_rate: 90_000,
+        channels: 0,
+        sdp_fmtp_line: String::new(),
+        rtcp_feedback: vec![],
+    }
+}
+
+async fn create_peer_connection(
     stun_urls: Vec<String>,
+    codec: VideoCodec,
 ) -> ServerResult<(Arc<RTCPeerConnection>, Arc<TrackLocalStaticSample>)> {
     let mut media_engine = MediaEngine::default();
+
+    let (capability, payload_type) = match codec {
+        VideoCodec::H264 => (h264_codec_capability(), 96u8),
+        VideoCodec::Vp8 => (vp8_codec_capability(), 97u8),
+    };
 
     media_engine
         .register_codec(
             RTCRtpCodecParameters {
-                capability: h264_codec_capability(),
-                payload_type: 96,
+                capability: capability.clone(),
+                payload_type,
                 ..Default::default()
             },
             RTPCodecType::Video,
         )
-        .map_err(|e| webrtc_error(format!("register H264 codec: {e}")))?;
+        .map_err(|e| webrtc_error(format!("register codec: {e}")))?;
 
     let mut registry = Registry::new();
     registry = register_default_interceptors(registry, &mut media_engine)
@@ -76,7 +96,7 @@ pub async fn create_peer_connection(
     );
 
     let video_track = Arc::new(TrackLocalStaticSample::new(
-        h264_codec_capability(),
+        capability,
         "video".to_owned(),
         "camera-stream".to_owned(),
     ));
@@ -92,10 +112,31 @@ pub async fn create_peer_connection(
 pub async fn handle_peer_session(
     mut ws_rx: mpsc::UnboundedReceiver<SignalMessage>,
     ws_tx: mpsc::UnboundedSender<SignalMessage>,
-    mut nal_rx: broadcast::Receiver<Bytes>,
     stun_urls: Vec<String>,
 ) -> ServerResult<()> {
-    let (pc, video_track) = create_peer_connection(stun_urls).await?;
+    // Wait for the SDP offer first — the codec is detected from the offer.
+    let offer_sdp = loop {
+        match ws_rx.recv().await {
+            Some(SignalMessage::Offer { sdp }) => break sdp,
+            Some(other) => debug!("ignoring pre-offer message: {other:?}"),
+            None => return Err(webrtc_error("WebSocket closed before offer")),
+        }
+    };
+
+    // H.264 clients (Quest 3, NVIDIA Windows) list "H264" in the offer.
+    // AMD/Intel Windows clients list only VP8/VP9/AV1 — fall back to VP8.
+    let codec = if offer_sdp.contains("H264") {
+        VideoCodec::H264
+    } else {
+        VideoCodec::Vp8
+    };
+    info!("Detected codec from offer: {codec:?}");
+
+    // Start camera for this session — lifecycle is per-connection.
+    let (camera_handle, _camera_task) = camera::start_camera(codec)?;
+    let mut nal_rx = camera_handle.subscribe();
+
+    let (pc, video_track) = create_peer_connection(stun_urls, codec).await?;
 
     // Notify when the peer connection is done (failed, disconnected, or closed)
     let done = Arc::new(Notify::new());
@@ -133,15 +174,6 @@ pub async fn handle_peer_session(
         })
     }));
 
-    // Wait for SDP offer from browser
-    let offer_sdp = loop {
-        match ws_rx.recv().await {
-            Some(SignalMessage::Offer { sdp }) => break sdp,
-            Some(other) => debug!("ignoring pre-offer message: {other:?}"),
-            None => return Err(webrtc_error("WebSocket closed before offer")),
-        }
-    };
-
     let offer = RTCSessionDescription::offer(offer_sdp)
         .map_err(|e| webrtc_error(format!("parse offer SDP: {e}")))?;
 
@@ -169,9 +201,9 @@ pub async fn handle_peer_session(
         loop {
             tokio::select! {
                 result = nal_rx.recv() => match result {
-                    Ok(nal_bytes) => {
+                    Ok(frame_bytes) => {
                         let sample = Sample {
-                            data: nal_bytes,
+                            data: frame_bytes,
                             duration: FRAME_DURATION,
                             ..Default::default()
                         };
@@ -224,5 +256,6 @@ pub async fn handle_peer_session(
     }
 
     let _ = pc.close().await;
+    camera_handle.stop();
     Ok(())
 }
