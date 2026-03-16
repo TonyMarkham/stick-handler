@@ -14,7 +14,6 @@ use webrtc_media::io::{
 
 const BROADCAST_CAPACITY: usize = 64;
 const H264_READER_BUF: usize = 1_048_576; // 1 MiB
-const IVF_READER_BUF: usize = 1_048_576; // 1 MiB
 const COMMAND: &str = "rpicam-vid";
 const TIMEOUT: &str = "0";
 const OUTPUT: &str = "-";
@@ -132,7 +131,7 @@ pub fn start_camera(codec: VideoCodec) -> ServerResult<(CameraHandle, JoinHandle
                 }
             }
             VideoCodec::Vp8 => {
-                let (mut reader, _header) = match IVFReader::new(bridge, IVF_READER_BUF) {
+                let (mut reader, _header) = match IVFReader::new(bridge) {
                     Ok(r) => r,
                     Err(e) => {
                         tracing::error!("IVFReader init error: {e}");
@@ -141,10 +140,10 @@ pub fn start_camera(codec: VideoCodec) -> ServerResult<(CameraHandle, JoinHandle
                 };
 
                 loop {
-                    match reader.next_packet() {
-                        Ok((packet, _frame_header)) => {
-                            tracing::trace!("VP8 frame: {} bytes", packet.data.len());
-                            let _ = tx_clone.send(packet.data);
+                    match reader.parse_next_frame() {
+                        Ok((frame, _frame_header)) => {
+                            tracing::trace!("VP8 frame: {} bytes", frame.len());
+                            let _ = tx_clone.send(frame.freeze());
                         }
                         Err(e) => {
                             tracing::error!("IVFReader error: {e}");

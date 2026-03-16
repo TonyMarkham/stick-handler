@@ -4,7 +4,6 @@ use crate::{
     error::{ServerResult, webrtc_error},
 };
 
-use bytes::Bytes;
 use signal_server::SignalMessage;
 use std::{sync::Arc, time::Duration};
 use tokio::sync::{Notify, broadcast, mpsc};
