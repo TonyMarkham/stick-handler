@@ -25,5 +25,34 @@
             <ui:SliderInt name="v-max" label="V max" low-value="0" high-value="255" value="255" show-input-field="true" class="slider" />
         </ui:VisualElement>
 
+        <!-- Preset Banks -->
+        <ui:VisualElement name="preset-banks" class="preset-banks-col">
+
+            <!-- Orange Bank -->
+            <ui:VisualElement name="orange-bank" class="preset-bank">
+                <ui:Label text="Orange" class="bank-label orange-label" />
+                <ui:VisualElement class="preset-row">
+                    <ui:Button name="orange-preset-1" text="P1" class="bs preset-btn" />
+                    <ui:Button name="orange-preset-2" text="P2" class="bs preset-btn" />
+                    <ui:Button name="orange-preset-3" text="P3" class="bs preset-btn" />
+                    <ui:Button name="orange-preset-4" text="P4" class="bs preset-btn" />
+                    <ui:Button name="orange-preset-5" text="P5" class="bs preset-btn" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <!-- Green Bank -->
+            <ui:VisualElement name="green-bank" class="preset-bank">
+                <ui:Label text="Green" class="bank-label green-label" />
+                <ui:VisualElement class="preset-row">
+                    <ui:Button name="green-preset-1" text="P1" class="bs preset-btn" />
+                    <ui:Button name="green-preset-2" text="P2" class="bs preset-btn" />
+                    <ui:Button name="green-preset-3" text="P3" class="bs preset-btn" />
+                    <ui:Button name="green-preset-4" text="P4" class="bs preset-btn" />
+                    <ui:Button name="green-preset-5" text="P5" class="bs preset-btn" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+        </ui:VisualElement>
+
     </ui:VisualElement>
 </ui:UXML>

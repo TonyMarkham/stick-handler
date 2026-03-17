@@ -1,5 +1,7 @@
 using System.Collections;
+using System.IO;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.Networking;
 using UnityEngine.UIElements;
 
@@ -21,10 +23,46 @@ public class HsvFilterController : MonoBehaviour
     private bool      _hasCaptured;
     private Coroutine _pendingRefresh;
 
+    private InputActionReference _aAction;
+    private HsvPreset            _hoveredPreset;
+    private SavingOverlay        _hoveredOverlay;
+    private Button               _hoveredBtn;
+    private float                _aHoldTime;
+    private float                _saveCompleteCooldown;
+
+    private const float SaveHoldDuration = 3f;
+
+    // ── Preset JSON types ────────────────────────────────────────────────────
+
+    [System.Serializable]
+    private class HsvPreset
+    {
+        public int hMin, hMax, sMin, sMax, vMin, vMax;
+    }
+
+    [System.Serializable]
+    private class PresetBank
+    {
+        public string      name;
+        public HsvPreset[] presets;
+    }
+
+    [System.Serializable]
+    private class PresetConfig
+    {
+        public PresetBank[] banks;
+    }
+
+    private const string PresetFileName = "hsv_presets.json";
+    private PresetConfig _presetConfig;
+
     // ── Lifecycle ───────────────────────────────────────────────────────────
 
     private void OnEnable()
     {
+        _presetConfig = LoadPresets();
+        _aAction = FindObjectOfType<XRInputManager>()?.GetRightA();
+
         var root = _uiDocument.rootVisualElement;
         if (root == null)
         {
@@ -62,6 +100,9 @@ public class HsvFilterController : MonoBehaviour
         _sMax.RegisterValueChangedCallback(OnSliderChanged);
         _vMin.RegisterValueChangedCallback(OnSliderChanged);
         _vMax.RegisterValueChangedCallback(OnSliderChanged);
+
+        WirePresetBank(root, "orange", 0);
+        WirePresetBank(root, "green",  1);
     }
 
     private void OnDisable()
@@ -77,6 +118,53 @@ public class HsvFilterController : MonoBehaviour
 
         StopAllCoroutines();
         _pendingRefresh = null;
+    }
+
+    // ── A-button hold to save ────────────────────────────────────────────────
+
+    private void Update()
+    {
+        if (_saveCompleteCooldown > 0)
+        {
+            _saveCompleteCooldown -= Time.deltaTime;
+            if (_saveCompleteCooldown <= 0)
+                _hoveredOverlay?.Hide();
+            return;
+        }
+
+        if (_hoveredPreset == null || _aAction == null)
+        {
+            _aHoldTime = 0;
+            return;
+        }
+
+        if (_aAction.action.IsPressed())
+        {
+            if (!_hoveredOverlay.visible) _hoveredOverlay.Show();
+            _aHoldTime += Time.deltaTime;
+            _hoveredOverlay.Progress = Mathf.Clamp01(_aHoldTime / SaveHoldDuration);
+
+            if (_aHoldTime >= SaveHoldDuration)
+            {
+                _hoveredPreset.hMin = _hMin.value;
+                _hoveredPreset.hMax = _hMax.value;
+                _hoveredPreset.sMin = _sMin.value;
+                _hoveredPreset.sMax = _sMax.value;
+                _hoveredPreset.vMin = _vMin.value;
+                _hoveredPreset.vMax = _vMax.value;
+
+                SavePresets();
+                _hoveredBtn.style.backgroundColor = new StyleColor(MedianHsvColor(_hoveredPreset));
+
+                _aHoldTime            = 0;
+                _saveCompleteCooldown = 0.5f;
+            }
+        }
+        else if (_aHoldTime > 0)
+        {
+            _aHoldTime = 0;
+            _hoveredOverlay.Hide();
+        }
     }
 
     // ── Capture ─────────────────────────────────────────────────────────────
@@ -162,6 +250,186 @@ public class HsvFilterController : MonoBehaviour
         }
 
         panel.SetTexture(DownloadHandlerTexture.GetContent(req));
+    }
+
+    // ── Presets ──────────────────────────────────────────────────────────────
+
+    private static PresetConfig LoadPresets()
+    {
+        string srcPath = Path.Combine(Application.streamingAssetsPath, PresetFileName);
+
+#if UNITY_EDITOR
+        // In the editor always read StreamingAssets directly so edits take effect immediately
+        if (!File.Exists(srcPath))
+        {
+            Debug.LogError($"[HsvFilter] Preset file not found at {srcPath}");
+            return null;
+        }
+        string json = File.ReadAllText(srcPath);
+        Debug.Log($"[HsvFilter] Loaded presets from {srcPath}");
+#else
+        // On device: copy from StreamingAssets to persistentDataPath once, then load from there
+        // (allows on-device edits via adb to persist across sessions)
+        string destPath = Path.Combine(Application.persistentDataPath, PresetFileName);
+        if (!File.Exists(destPath))
+        {
+            if (!File.Exists(srcPath))
+            {
+                Debug.LogError($"[HsvFilter] Default preset file not found at {srcPath}");
+                return null;
+            }
+            File.Copy(srcPath, destPath);
+            Debug.Log($"[HsvFilter] Copied default presets to {destPath}");
+        }
+        string json = File.ReadAllText(destPath);
+        Debug.Log($"[HsvFilter] Loaded presets from {destPath}");
+#endif
+
+        return JsonUtility.FromJson<PresetConfig>(json);
+    }
+
+    private void WirePresetBank(VisualElement root, string bankKey, int bankIndex)
+    {
+        if (_presetConfig?.banks == null || bankIndex >= _presetConfig.banks.Length) return;
+
+        PresetBank bank = _presetConfig.banks[bankIndex];
+
+        for (int i = 0; i < 5; i++)
+        {
+            int capturedIndex = i;
+            var btn = root.Q<Button>($"{bankKey}-preset-{i + 1}");
+            if (btn == null)
+            {
+                Debug.LogWarning($"[HsvFilter] Button '{bankKey}-preset-{i + 1}' not found in UXML");
+                continue;
+            }
+
+            if (capturedIndex >= bank.presets.Length)
+            {
+                Debug.LogWarning($"[HsvFilter] No preset data for '{bankKey}' index {capturedIndex}");
+                continue;
+            }
+
+            HsvPreset preset = bank.presets[capturedIndex];
+            btn.style.backgroundColor = new StyleColor(MedianHsvColor(preset));
+
+            var overlay = new SavingOverlay();
+            btn.Add(overlay);
+
+            string originalText = btn.text;
+            overlay.OnShow += () => btn.text = "";
+            overlay.OnHide += () => btn.text = originalText;
+
+            btn.RegisterCallback<PointerEnterEvent>(_ =>
+            {
+                _hoveredPreset  = preset;
+                _hoveredOverlay = overlay;
+                _hoveredBtn     = btn;
+            });
+
+            btn.RegisterCallback<PointerLeaveEvent>(_ =>
+            {
+                if (_hoveredPreset != preset) return;
+                _aHoldTime      = 0;
+                _hoveredPreset  = null;
+                _hoveredOverlay = null;
+                _hoveredBtn     = null;
+                overlay.Hide();
+            });
+
+            btn.RegisterCallback<PointerUpEvent>(_ => ApplyPreset(preset));
+        }
+    }
+
+    private void SavePresets()
+    {
+        string json = JsonUtility.ToJson(_presetConfig, true);
+#if UNITY_EDITOR
+        File.WriteAllText(Path.Combine(Application.streamingAssetsPath, PresetFileName), json);
+#else
+        File.WriteAllText(Path.Combine(Application.persistentDataPath, PresetFileName), json);
+#endif
+        Debug.Log("[HsvFilter] Presets saved");
+    }
+
+    private void ApplyPreset(HsvPreset p)
+    {
+        _hMin.value = p.hMin;
+        _hMax.value = p.hMax;
+        _sMin.value = p.sMin;
+        _sMax.value = p.sMax;
+        _vMin.value = p.vMin;
+        _vMax.value = p.vMax;
+    }
+
+    private static Color MedianHsvColor(HsvPreset p) =>
+        Color.HSVToRGB(
+            ((p.hMin + p.hMax) / 2f) / 179f,
+            ((p.sMin + p.sMax) / 2f) / 255f,
+            ((p.vMin + p.vMax) / 2f) / 255f);
+
+    // ── SavingOverlay ────────────────────────────────────────────────────────
+
+    private class SavingOverlay : VisualElement
+    {
+        private float        _progress;
+        private readonly Label _label;
+
+        public float Progress
+        {
+            get => _progress;
+            set { _progress = Mathf.Clamp01(value); MarkDirtyRepaint(); }
+        }
+
+        public SavingOverlay()
+        {
+            style.position       = Position.Absolute;
+            style.left           = 0; style.right  = 0;
+            style.top            = 0; style.bottom = 0;
+            style.alignItems     = Align.Center;
+            style.justifyContent = Justify.Center;
+            pickingMode          = PickingMode.Ignore;
+
+            _label = new Label("SAVING") { pickingMode = PickingMode.Ignore };
+            _label.style.color                   = Color.white;
+            _label.style.fontSize                = 7;
+            _label.style.unityFontStyleAndWeight = FontStyle.Bold;
+            _label.style.position                = Position.Absolute;
+            Add(_label);
+
+            generateVisualContent += Draw;
+            visible = false;
+        }
+
+        public event System.Action OnShow;
+        public event System.Action OnHide;
+
+        public void Show() { visible = true;  Progress = 0; OnShow?.Invoke(); }
+        public void Hide() { visible = false; Progress = 0; OnHide?.Invoke(); }
+
+        private void Draw(MeshGenerationContext ctx)
+        {
+            if (_progress <= 0) return;
+
+            float cx     = layout.width  / 2f;
+            float cy     = layout.height / 2f;
+            float radius = Mathf.Min(cx, cy) - 3f;
+
+            var p2d = ctx.painter2D;
+            p2d.lineWidth = 3f;
+
+            // Faint background ring
+            p2d.strokeColor = new Color(1f, 1f, 1f, 0.25f);
+            p2d.BeginPath();
+            p2d.Arc(new Vector2(cx, cy), radius, 0f, 360f, ArcDirection.Clockwise);
+            p2d.Stroke();
+
+            // Filling arc, clockwise from top
+            p2d.strokeColor = Color.white;
+            p2d.BeginPath();
+            p2d.Arc(new Vector2(cx, cy), radius, -90f, -90f + _progress * 360f, ArcDirection.Clockwise);
+            p2d.Stroke();
+        }
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────

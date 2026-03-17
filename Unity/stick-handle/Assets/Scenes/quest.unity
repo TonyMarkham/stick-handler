@@ -209,7 +209,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6758849327301269162, guid: c6b4b184963f45b4f82ef507fe7e2e5c, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 2
+      value: 2.5
       objectReference: {fileID: 0}
     - target: {fileID: 6758849327301269162, guid: c6b4b184963f45b4f82ef507fe7e2e5c, type: 3}
       propertyPath: m_LocalPosition.z
@@ -589,7 +589,7 @@ Transform:
   m_GameObject: {fileID: 258665463}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 2, z: 5}
+  m_LocalPosition: {x: 0, y: 0.25, z: 5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -697,8 +697,8 @@ Transform:
   m_GameObject: {fileID: 315279399}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.049999956, y: 1.0600002, z: 0}
-  m_LocalScale: {x: 1.2500001, y: 1.2500001, z: 5}
+  m_LocalPosition: {x: 0, y: 1.4, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 780682131}
@@ -840,7 +840,7 @@ MonoBehaviour:
   m_Position: 0
   m_WorldSpaceSizeMode: 1
   m_WorldSpaceWidth: 300
-  m_WorldSpaceHeight: 150
+  m_WorldSpaceHeight: 250
   m_PivotReferenceSize: 0
   m_Pivot: 0
   m_WorldSpaceCollider: {fileID: 0}
@@ -856,7 +856,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94331a38a49f63949ab03c1b5a9b8bc3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StillImagePanelController
-  _label: Image
+  _label: Original
 --- !u!4 &405449225 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 487254, guid: 126d619cf4daa52469682f85c1378b4a, type: 3}
@@ -892,8 +892,8 @@ Transform:
   m_GameObject: {fileID: 435234230}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.049999956, y: 1.0600002, z: 0}
-  m_LocalScale: {x: 1.2500001, y: 1.2500001, z: 5}
+  m_LocalPosition: {x: 0, y: 1.4, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1609814404}
@@ -910,7 +910,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94331a38a49f63949ab03c1b5a9b8bc3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StillImagePanelController
-  _label: Image
+  _label: Overlay
 --- !u!65 &435234233
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1048,7 +1048,7 @@ MonoBehaviour:
   m_Position: 0
   m_WorldSpaceSizeMode: 1
   m_WorldSpaceWidth: 300
-  m_WorldSpaceHeight: 150
+  m_WorldSpaceHeight: 250
   m_PivotReferenceSize: 0
   m_Pivot: 0
   m_WorldSpaceCollider: {fileID: 0}
@@ -1427,11 +1427,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6758849327301269162, guid: c6b4b184963f45b4f82ef507fe7e2e5c, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 3
+      value: 3.1
       objectReference: {fileID: 0}
     - target: {fileID: 6758849327301269162, guid: c6b4b184963f45b4f82ef507fe7e2e5c, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 2
+      value: 2.5
       objectReference: {fileID: 0}
     - target: {fileID: 6758849327301269162, guid: c6b4b184963f45b4f82ef507fe7e2e5c, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1501,7 +1501,7 @@ Transform:
   m_GameObject: {fileID: 619786599}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.93, z: 0}
+  m_LocalPosition: {x: 0, y: 2.346, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1628,11 +1628,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6758849327301269162, guid: c6b4b184963f45b4f82ef507fe7e2e5c, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -3
+      value: -3.1
       objectReference: {fileID: 0}
     - target: {fileID: 6758849327301269162, guid: c6b4b184963f45b4f82ef507fe7e2e5c, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 2
+      value: 2.5
       objectReference: {fileID: 0}
     - target: {fileID: 6758849327301269162, guid: c6b4b184963f45b4f82ef507fe7e2e5c, type: 3}
       propertyPath: m_LocalPosition.z
@@ -1733,6 +1733,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::XRInputManager
   menuToggleAction: {fileID: -3505892561844033743, guid: c348712bda248c246b8c49b3db54643f, type: 3}
+  rightA: {fileID: -3301045081662556293, guid: c348712bda248c246b8c49b3db54643f, type: 3}
   menuGameObject: {fileID: 258665463}
 --- !u!1 &668524088
 GameObject:
@@ -1764,8 +1765,8 @@ Transform:
   m_GameObject: {fileID: 668524088}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.049999956, y: 1.0600002, z: 0}
-  m_LocalScale: {x: 1.2500001, y: 1.2500001, z: 5}
+  m_LocalPosition: {x: 0, y: 1.4, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1681051982}
@@ -1782,7 +1783,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94331a38a49f63949ab03c1b5a9b8bc3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StillImagePanelController
-  _label: Image
+  _label: Mask
 --- !u!65 &668524091
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -1920,7 +1921,7 @@ MonoBehaviour:
   m_Position: 0
   m_WorldSpaceSizeMode: 1
   m_WorldSpaceWidth: 300
-  m_WorldSpaceHeight: 150
+  m_WorldSpaceHeight: 250
   m_PivotReferenceSize: 0
   m_Pivot: 0
   m_WorldSpaceCollider: {fileID: 0}
@@ -2952,7 +2953,7 @@ Transform:
   m_GameObject: {fileID: 1435284748}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: -0.009, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2977,7 +2978,7 @@ MonoBehaviour:
   m_Position: 0
   m_WorldSpaceSizeMode: 1
   m_WorldSpaceWidth: 600
-  m_WorldSpaceHeight: 350
+  m_WorldSpaceHeight: 433.8
   m_PivotReferenceSize: 0
   m_Pivot: 0
   m_WorldSpaceCollider: {fileID: 0}
@@ -3500,7 +3501,7 @@ Transform:
   m_GameObject: {fileID: 2009977029}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 1.117, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
