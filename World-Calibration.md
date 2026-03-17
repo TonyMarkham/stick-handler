@@ -2,11 +2,13 @@
 
 ## Context
 
-The stick-handler app needs to map Pi camera pixel coordinates to real-world 3D positions. The camera is fixed; the floor has 3 known orange stickers (on labelled 8.5×11 paper: 1, 2, 3). The user places 3 virtual cylinders over the stickers in MR passthrough — the cylinders' Unity world positions become the ground truth for a camera-extrinsic solve.
+The stick-handler app needs to map Pi camera pixel coordinates to real-world 3D positions. The camera is fixed; the floor has 4 known orange stickers (on labelled 8.5×11 paper: 1, 2, 3, 4). The user places 4 virtual cylinders over the stickers in MR passthrough — the cylinders' Unity world positions become the ground truth for a camera-extrinsic solve.
+
+4 markers are required (not 3) because a full perspective homography has 8 degrees of freedom and needs exactly 4 point pairs to be uniquely determined. This correctly handles any camera mounting angle, not just directly overhead.
 
 The `WorldCalibrationData` ScriptableObject is the **single source of truth** for the entire calibration pipeline. It gates progression: HSV Filter must pass before World Orientation can begin; World Orientation must complete before the game can be entered. No calibration step can be skipped.
 
-**Implementation order**: `Server-Game-Loop.md` should be implemented **before** this feature. With the tracking WebSocket live, a 4th "blob indicator" cylinder shows in real time where the Pi thinks the green blob is in world space — giving immediate visual feedback on calibration accuracy as the user adjusts the cylinders.
+**Implementation order**: `Server-Game-Loop.md` should be implemented **before** this feature. With the tracking WebSocket live, a 5th "blob indicator" cylinder shows in real time where the Pi thinks the green blob is in world space — giving immediate visual feedback on calibration accuracy as the user adjusts the cylinders.
 
 ---
 
@@ -32,7 +34,7 @@ Runtime data bus and persistence layer.
 public class WorldCalibrationData : ScriptableObject
 {
     // HSV gate — written by HsvFilterController after each scan
-    public bool orangeValid;   // true when orange bank detects exactly 3 blobs
+    public bool orangeValid;   // true when orange bank detects exactly 4 blobs
     public bool greenValid;    // true when green bank detects exactly 1 blob
     public bool HsvSatisfied => orangeValid && greenValid;
 
@@ -40,6 +42,7 @@ public class WorldCalibrationData : ScriptableObject
     public Vector3 cylinderA;
     public Vector3 cylinderB;
     public Vector3 cylinderC;
+    public Vector3 cylinderD;
     public float[] transformMatrix; // 3x3 homography (pixel→floor-plane), row-major, 9 elements
     public bool isCalibrated;
 
@@ -69,7 +72,7 @@ Create asset at: `Assets/Resources/WorldCalibrationData.asset`
 
 Follows the same pattern as `HsvFilterController.cs` / `CalibrationBackButton.cs`:
 
-- `[SerializeField]` refs to 3 cylinder Transforms (`_cylinderA`, `_cylinderB`, `_cylinderC`)
+- `[SerializeField]` refs to 4 cylinder Transforms (`_cylinderA`, `_cylinderB`, `_cylinderC`, `_cylinderD`)
 - `[SerializeField] private WorldCalibrationData _calibrationData`
 - `[SerializeField] private CalibrationMenuController _menuController`
 - `[SerializeField] private string _serverUrl`
@@ -81,8 +84,8 @@ Follows the same pattern as `HsvFilterController.cs` / `CalibrationBackButton.cs
 - `OnDisable`:
   - Unregisters buttons and cylinder events
   - Calls `POST /calibration/end` — Pi returns to setup mode
-- `Update()`: validates triangle each frame — if any side < `_minSideLength` (default `0.5f` m) OR `|N| < epsilon` (collinear), show `error-label` in red ("Spread cylinders further apart") and disable Save. Otherwise hide error and enable Save.
-- `OnCylinderReleased()`: if triangle is valid, `StartCoroutine(Recalc())` → `POST /calibration/recalc` with current positions → updates `_calibrationData.transformMatrix` → magenta indicator moves
+- `Update()`: validates quadrilateral each frame — if any pairwise distance among the 4 cylinders < `_minSideLength` (default `0.3f` m), show `error-label` in red ("Spread cylinders further apart") and disable Save. Otherwise hide error and enable Save.
+- `OnCylinderReleased()`: if quadrilateral is valid, `StartCoroutine(Recalc())` → `POST /calibration/recalc` with current positions → updates `_calibrationData.transformMatrix` → magenta indicator moves
 - `SavePositions()`:
   1. Writes final positions + matrix into SO
   2. `_calibrationData.SaveToDisk()`
@@ -106,7 +109,7 @@ Subscribes to the tracking WebSocket (`ws://<serverUrl>/tracking`). On each `{"x
 
 Extends `XRGrabInteractable`. Overrides `ProcessInteractable(XRInteractionUpdateOrder.UpdatePhase)` to clamp `transform.position.y = _floorY` (serialized float, default `0f`) after the base position update runs. Bakes the Y constraint into the interactable — no separate script fighting the grab system each frame.
 
-Used by all 3 calibration cylinders in place of plain `XRGrabInteractable`.
+Used by all 4 calibration cylinders in place of plain `XRGrabInteractable`.
 
 ---
 
@@ -118,7 +121,7 @@ Used by all 3 calibration cylinders in place of plain `XRGrabInteractable`.
 
 ### `Assets/UI/CylinderLabel.uxml`
 
-Minimal — single label element. Uses `WorldSpacePanelSettings.asset` (`Assets/UI/`, `m_RenderMode: 1`). World space size ~80×80px. Label text ("1", "2", "3") set in Inspector.
+Minimal — single label element. Uses `WorldSpacePanelSettings.asset` (`Assets/UI/`, `m_RenderMode: 1`). World space size ~80×80px. Label text ("1", "2", "3", "4") set in Inspector.
 
 ### `Assets/UI/CylinderLabel.uss`
 
@@ -176,7 +179,7 @@ After each capture/mask request, server returns blob count alongside the image. 
 
 | Bank | Required | Valid | Invalid |
 |------|----------|-------|---------|
-| Orange | exactly 3 | "3 blobs ✓" (green) | "N blobs ✗ — must be 3" (red) |
+| Orange | exactly 4 | "4 blobs ✓" (green) | "N blobs ✗ — must be 4" (red) |
 | Green | exactly 1 | "1 blob ✓" (green) | "N blobs ✗ — must be 1" (red) |
 
 - Writes `_calibrationData.orangeValid` and `_calibrationData.greenValid` after each scan
@@ -189,28 +192,30 @@ After each capture/mask request, server returns blob count alongside the image. 
 
 ### New mode: Calibration Tracking Mode
 
-- `POST /calibration/start` — Pi switches to green-blob-only centroid streaming (same pipeline as gameplay, no MJPEG). Streams `{"x":…,"y":…}` JSON over WebSocket at `/tracking`.
+- `POST /calibration/start` — Pi switches to World Calibration mode: same MJPEG + green blob centroid streaming pipeline as Tracking mode (see `Server-Game-Loop.md`). Streams `{"x":…,"y":…}` JSON over WebSocket at `/tracking`.
 - `POST /calibration/end` — returns to setup/WebRTC mode.
-- Orange blob detection available on-demand for recalc (single frame capture, not continuous).
+- Orange blob detection available on-demand via `POST /calibration/recalc` (single frame from the live MJPEG stream).
 
 ### `POST /calibration/recalc`
 
-Called by Quest on each cylinder release (if triangle is valid).
+Called by Quest on each cylinder release (if quadrilateral is valid).
 
 **Request**:
 ```json
-{ "cylinders": [{"label":1,"x":…,"z":…}, {"label":2,…}, {"label":3,…}] }
+{ "cylinders": [{"label":1,"x":…,"z":…}, {"label":2,…}, {"label":3,…}, {"label":4,…}] }
 ```
 
 **Server logic**:
-1. Capture one still frame (brief pause in centroid stream)
-2. Run orange HSV detection → 3 orange blob centroids (using saved orange preset from `hsv_presets.json`)
-3. Match blobs to labels — **forward or reverse only**:
-   - Compute `N = (P2−P1) × (P3−P1)`
-   - `dot(N, (0,1,0)) >= 0` → pixel blobs in detection order = labels 1→2→3
-   - `dot(N, (0,1,0)) < 0` → reverse pixel blob order = labels 3→2→1
-4. `opencv::calib3d::find_homography` with matched pairs
-5. Return matrix
+1. Grab the most recent MJPEG frame from the live detection stream
+2. Run orange HSV detection → 4 orange blob centroids (using saved orange preset from `hsv_presets.json`)
+3. Sort blobs by angle from their centroid (clockwise from north) → stable spatial ordering independent of detection order
+4. Match blobs to labels — **forward or reverse only**:
+   - Compute signed area of triangle formed by blobs [0],[1],[2]: `cross_px = (b1−b0) × (b2−b0)`
+   - Compute signed area of triangle formed by cylinders 1,2,3: `cross_world = (c1−c0) × (c2−c0)`
+   - Same sign → forward: blob[i] → label[i+1] for i = 0..3
+   - Different sign → reverse: blob[3−i] → label[i+1] for i = 0..3
+5. `opencv::calib3d::find_homography` with the 4 matched pairs (4 pairs → system is exactly determined, full perspective homography)
+6. Return 3×3 matrix row-major
 
 **Response**:
 ```json
@@ -218,8 +223,8 @@ Called by Quest on each cylinder release (if triangle is valid).
 ```
 
 **Error cases** (HTTP 422):
-- Detected blob count ≠ 3 → Quest shows status message, user adjusts HSV
-- `|N| < epsilon` (collinear) → Quest UI already blocks, server double-checks
+- Detected blob count ≠ 4 → Quest shows status message, user adjusts HSV
+- No MJPEG frame available yet → HTTP 503, Quest retries
 
 ---
 
@@ -240,6 +245,7 @@ Calibration (existing — CalibrationMenuController)
     │                             ~0.15m above cylinder, LazyFollow (LookAtWithWorldUp)
     ├── Cylinder_B        [NEW] — same setup, label "2"
     ├── Cylinder_C        [NEW] — same setup, label "3"
+    ├── Cylinder_D        [NEW] — same setup, label "4"
     └── BlobIndicator     [NEW] — Unity Cylinder primitive
                                   3" dia = scale (0.0762, 0.0762, 0.0762)
                                   Magenta #FF00FF, alpha 0.7, URP Lit Transparent
@@ -248,21 +254,24 @@ Calibration (existing — CalibrationMenuController)
                                   ⚠ Requires Server-Game-Loop.md
 ```
 
-**Cylinder spawn positions** (equilateral cluster, ~0.3m spacing — user drags to actual stickers):
-- A: (0, 0, 0.17)
-- B: (0.15, 0, −0.09)
-- C: (−0.15, 0, −0.09)
+**Cylinder spawn positions** (square cluster, ~0.3m spacing — user drags to actual stickers):
+- A: (−0.15, 0, 0.15)
+- B: (0.15, 0, 0.15)
+- C: (0.15, 0, −0.15)
+- D: (−0.15, 0, −0.15)
+
+Number the physical stickers to match this clockwise layout when viewed from above so the winding check reliably resolves forward vs reverse in one step.
 
 ---
 
 ## Verification
 
-1. Complete HSV Filter calibration (orange = 3 blobs, green = 1 blob) → World Orient button enables
-2. Press World Orient → Pi enters calibration tracking mode, 3 cyan cylinders appear at floor level, magenta indicator visible
+1. Complete HSV Filter calibration (orange = 4 blobs, green = 1 blob) → World Orient button enables
+2. Press World Orient → Pi enters calibration tracking mode, 4 cyan cylinders appear at floor level, magenta indicator visible
 3. Grab cylinder → slides on floor only (Y stays 0), label billboards face headset
-4. Move cylinders apart until red error clears (triangle ≥ 0.5m sides)
+4. Spread all 4 cylinders until red error clears (all pairwise distances ≥ 0.3m)
 5. Release a cylinder → Quest POSTs to `/calibration/recalc` → magenta indicator repositions
-6. Align all 3 cylinders with stickers → Save enables → press Save
+6. Align all 4 cylinders with stickers → Save enables → press Save
    - `world_calibration.json` written to `persistentDataPath`
    - `isCalibrated = true` → game entry unlocks
 7. Press ← Back → returns to calibration menu, Pi exits calibration mode

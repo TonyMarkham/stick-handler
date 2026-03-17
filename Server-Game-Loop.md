@@ -2,12 +2,19 @@
 
 ## Modes
 
-The server operates in two mutually exclusive modes:
+The server operates in three mutually exclusive modes:
 
 | Mode | Active When |
 |---|---|
 | **Setup** | Default. WebRTC stream + calibration endpoints live. |
-| **Tracking** | Gameplay. Green blob detection only. Everything else idle. |
+| **World Calibration** | User is placing cylinders on orange stickers. MJPEG + green blob detection running. `POST /calibration/recalc` available. |
+| **Tracking** | Gameplay. MJPEG + green blob detection running. Everything else idle. |
+
+Mode transitions:
+- Setup → World Calibration: `POST /calibration/start`
+- World Calibration → Setup: `POST /calibration/end`
+- Setup → Tracking: `POST /tracking/start`
+- Tracking → Setup: `POST /tracking/stop`
 
 ---
 
@@ -16,6 +23,16 @@ The server operates in two mutually exclusive modes:
 - `rpicam-vid` running, broadcasting H.264 to WebRTC clients via `/ws`
 - Calibration endpoints available (`/still/*`, `/hsv/*`)
 - No detection loop running
+
+---
+
+## World Calibration Mode
+
+Entered via `POST /calibration/start`, exited via `POST /calibration/end`.
+
+Uses the **same MJPEG pipeline and `/tracking` WebSocket** as Tracking Mode — green blob centroid stream is live so the blob indicator cylinder moves in real time while the user positions the orange stickers.
+
+`POST /calibration/recalc` is only valid in this mode. See `World-Calibration.md` for full details.
 
 ---
 
@@ -42,6 +59,8 @@ Entered via `POST /tracking/start`, exited via `POST /tracking/stop`.
 
 ## Tracking WebSocket (`GET /tracking`)
 
+Shared by both World Calibration and Tracking modes.
+
 - Server-push only. Quest connects once, server spams coords.
 - Quest **never requests anything** after the initial WS upgrade.
 - Message format (JSON per frame):
@@ -49,7 +68,7 @@ Entered via `POST /tracking/start`, exited via `POST /tracking/stop`.
   { "x": 960.5, "y": 540.2 }
   ```
 - If no green blob is detected in a frame, **no message is sent** for that frame.
-- Connection drops naturally when `POST /tracking/stop` is called.
+- Connection drops naturally when the MJPEG pipeline is killed.
 
 ---
 
