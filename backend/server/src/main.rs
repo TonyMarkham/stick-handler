@@ -2,6 +2,7 @@ mod app_state;
 mod camera;
 mod camera_handle;
 pub mod error;
+mod hsv_handler;
 mod still_handler;
 mod webrtc_handler;
 
@@ -13,11 +14,11 @@ use axum::{
         {State, WebSocketUpgrade},
     },
     response::{Html, Response},
-    routing::{get, post},
+    routing::{get, post, put},
 };
 use futures_util::{SinkExt, StreamExt};
 use signal_server::SignalMessage;
-use std::sync::Arc;
+use std::{path::PathBuf, sync::Arc};
 use tokio::{
     signal::unix::{SignalKind, signal},
     sync::mpsc,
@@ -30,9 +31,13 @@ async fn main() {
         .with_env_filter("info,server=debug")
         .init();
 
-    let state = Arc::new(AppState::new(vec![
-        "stun:stun.l.google.com:19302".to_owned(),
-    ]));
+    let hsv_presets_path = PathBuf::from("hsv_presets.json");
+    let hsv_presets = hsv_handler::load_presets(&hsv_presets_path).await;
+    let state = Arc::new(AppState::new(
+        vec!["stun:stun.l.google.com:19302".to_owned()],
+        hsv_presets,
+        hsv_presets_path,
+    ));
 
     let app = Router::new()
         .route("/", get(index_handler))
@@ -41,6 +46,10 @@ async fn main() {
         .route("/still/original", get(still_handler::original_handler))
         .route("/still/mask", get(still_handler::mask_handler))
         .route("/still/overlay", get(still_handler::overlay_handler))
+        .route("/still/detected", get(still_handler::detected_handler))
+        .route("/hsv", get(hsv_handler::get_handler))
+        .route("/hsv/green", put(hsv_handler::put_green_handler))
+        .route("/hsv/orange", put(hsv_handler::put_orange_handler))
         .with_state(Arc::clone(&state));
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();
