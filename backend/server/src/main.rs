@@ -1,19 +1,23 @@
 mod app_state;
+mod calibration_handler;
 mod camera;
 mod camera_handle;
 pub mod error;
 mod hsv_handler;
+mod mjpeg_pipeline;
 mod still_handler;
+mod tracking_handler;
 mod webrtc_handler;
 
-use app_state::AppState;
+use app_state::{AppState, ServerMode};
 use axum::{
     Router,
     extract::{
         ws::{Message, WebSocket},
         {State, WebSocketUpgrade},
     },
-    response::{Html, Response},
+    http::StatusCode,
+    response::{Html, IntoResponse, Response},
     routing::{get, post, put},
 };
 use futures_util::{SinkExt, StreamExt};
@@ -41,15 +45,41 @@ async fn main() {
 
     let app = Router::new()
         .route("/", get(index_handler))
+        // WebRTC (Setup mode only)
         .route("/ws", get(ws_handler))
+        // Still capture + HSV calibration (Setup mode only for capture/stills)
         .route("/still/capture", post(still_handler::capture_handler))
         .route("/still/original", get(still_handler::original_handler))
         .route("/still/mask", get(still_handler::mask_handler))
         .route("/still/overlay", get(still_handler::overlay_handler))
         .route("/still/detected", get(still_handler::detected_handler))
+        // HSV presets (any mode)
         .route("/hsv", get(hsv_handler::get_handler))
         .route("/hsv/green", put(hsv_handler::put_green_handler))
         .route("/hsv/orange", put(hsv_handler::put_orange_handler))
+        // World calibration mode
+        .route(
+            "/calibration/start",
+            post(calibration_handler::calibration_start_handler),
+        )
+        .route(
+            "/calibration/end",
+            post(calibration_handler::calibration_end_handler),
+        )
+        .route(
+            "/calibration/recalc",
+            post(calibration_handler::calibration_recalc_handler),
+        )
+        // Tracking mode
+        .route(
+            "/tracking/start",
+            post(tracking_handler::tracking_start_handler),
+        )
+        .route(
+            "/tracking/stop",
+            post(tracking_handler::tracking_stop_handler),
+        )
+        .route("/tracking", get(tracking_handler::tracking_ws_handler))
         .with_state(Arc::clone(&state));
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();
@@ -66,6 +96,12 @@ async fn index_handler() -> Html<&'static str> {
 }
 
 async fn ws_handler(ws: WebSocketUpgrade, State(state): State<Arc<AppState>>) -> Response {
+    {
+        let mode = state.mode.read().await;
+        if !matches!(*mode, ServerMode::Setup) {
+            return StatusCode::CONFLICT.into_response();
+        }
+    }
     ws.on_upgrade(move |socket| handle_socket(socket, state))
 }
 
@@ -77,9 +113,7 @@ async fn handle_socket(socket: WebSocket, state: Arc<AppState>) {
     tokio::spawn(ws_read_task(ws_read, in_tx));
     tokio::spawn(ws_write_task(ws_write, out_rx));
 
-    if let Err(e) =
-        webrtc_handler::handle_peer_session(in_rx, out_tx, state.stun_urls.clone()).await
-    {
+    if let Err(e) = webrtc_handler::handle_peer_session(in_rx, out_tx, state).await {
         warn!("peer session error: {e}");
     }
 }

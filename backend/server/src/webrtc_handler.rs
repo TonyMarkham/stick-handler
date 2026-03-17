@@ -1,4 +1,5 @@
 use crate::{
+    app_state::AppState,
     camera,
     camera::VideoCodec,
     error::{ServerResult, webrtc_error},
@@ -111,7 +112,7 @@ async fn create_peer_connection(
 pub async fn handle_peer_session(
     mut ws_rx: mpsc::UnboundedReceiver<SignalMessage>,
     ws_tx: mpsc::UnboundedSender<SignalMessage>,
-    stun_urls: Vec<String>,
+    state: Arc<AppState>,
 ) -> ServerResult<()> {
     // Wait for the SDP offer first — the codec is detected from the offer.
     let offer_sdp = loop {
@@ -131,11 +132,13 @@ pub async fn handle_peer_session(
     };
     info!("Detected codec from offer: {codec:?}");
 
-    // Start camera for this session — lifecycle is per-connection.
+    // Start camera and store the handle in AppState so stop_active_pipeline can
+    // kill it if a mode transition happens while the session is live.
     let (camera_handle, _camera_task) = camera::start_camera(codec)?;
     let mut nal_rx = camera_handle.subscribe();
+    *state.webrtc_camera.lock().await = Some(camera_handle);
 
-    let (pc, video_track) = create_peer_connection(stun_urls, codec).await?;
+    let (pc, video_track) = create_peer_connection(state.stun_urls.clone(), codec).await?;
 
     // Notify when the peer connection is done (failed, disconnected, or closed)
     let done = Arc::new(Notify::new());
@@ -255,6 +258,12 @@ pub async fn handle_peer_session(
     }
 
     let _ = pc.close().await;
-    camera_handle.stop();
+
+    // Clear the camera handle from AppState. If stop_active_pipeline already took it,
+    // take() returns None and we skip the stop (handle was already killed externally).
+    if let Some(handle) = state.webrtc_camera.lock().await.take() {
+        handle.stop();
+    }
+
     Ok(())
 }

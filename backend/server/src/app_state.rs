@@ -1,8 +1,10 @@
+use crate::camera_handle::CameraHandle;
+
 use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::sync::Arc;
-use tokio::sync::RwLock;
+use tokio::sync::{Mutex, RwLock, broadcast};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HsvRange {
@@ -43,12 +45,39 @@ impl Default for HsvPresets {
     }
 }
 
+/// The server's operating mode. Only one camera pipeline is active at a time.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ServerMode {
+    /// Default. WebRTC stream and HSV calibration endpoints live.
+    Setup,
+    /// MJPEG + green blob centroid stream running. User places cylinders on stickers.
+    WorldCalibration,
+    /// MJPEG + green blob centroid stream running. Active gameplay.
+    Tracking,
+}
+
+/// A running MJPEG detection pipeline.
+pub struct MjpegPipeline {
+    /// The underlying camera subprocess handle.
+    pub camera: CameraHandle,
+    /// Broadcasts `(cx, cy)` pixel centroids for the largest green blob each frame.
+    pub centroid_tx: broadcast::Sender<(f32, f32)>,
+    /// Most recent decoded MJPEG frame, used by `/calibration/recalc`.
+    pub latest_frame: Arc<RwLock<Option<Bytes>>>,
+}
+
 #[derive(Clone)]
 pub struct AppState {
     pub stun_urls: Vec<String>,
     pub still_jpeg: Arc<RwLock<Option<Bytes>>>,
     pub hsv_presets: Arc<RwLock<HsvPresets>>,
     pub hsv_presets_path: PathBuf,
+    /// Single source of truth for camera ownership.
+    pub mode: Arc<RwLock<ServerMode>>,
+    /// Populated only while a `/ws` WebRTC session is live.
+    pub webrtc_camera: Arc<Mutex<Option<CameraHandle>>>,
+    /// Populated when mode is `WorldCalibration` or `Tracking`.
+    pub mjpeg_pipeline: Arc<Mutex<Option<MjpegPipeline>>>,
 }
 
 impl AppState {
@@ -58,6 +87,23 @@ impl AppState {
             still_jpeg: Arc::new(RwLock::new(None)),
             hsv_presets: Arc::new(RwLock::new(hsv_presets)),
             hsv_presets_path,
+            mode: Arc::new(RwLock::new(ServerMode::Setup)),
+            webrtc_camera: Arc::new(Mutex::new(None)),
+            mjpeg_pipeline: Arc::new(Mutex::new(None)),
+        }
+    }
+
+    /// Kill whichever pipeline is currently active and reset both camera fields to `None`.
+    ///
+    /// Called before every mode transition that acquires the camera, ensuring hardware
+    /// is free before the new pipeline spawns. Handles the case where a WebRTC or
+    /// tracking session was not cleanly closed by the client.
+    pub async fn stop_active_pipeline(&self) {
+        if let Some(handle) = self.webrtc_camera.lock().await.take() {
+            handle.stop();
+        }
+        if let Some(pipeline) = self.mjpeg_pipeline.lock().await.take() {
+            pipeline.camera.stop();
         }
     }
 }

@@ -16,16 +16,17 @@ axum = { version = "0.8.8", features = ["ws"] }
 futures-util = { version = "0.3.32" }
 bytes = { version = "1.11.1" }
 error-location = { version = "0.1.0" }
+opencv = { version = "0.98.1", features = ["calib3d", "imgcodecs", "imgproc"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = { version = "1.0.149" }
 signal = { version = "0.7.0" }
 thiserror = { version = "2.0.18" }
 tower-http = { version = "0.6.8", features = ["tracing"] }
-tokio = { version = "1.49.0", features = ["full"] }
+tokio = { version = "1.50.0", features = ["full"] }
 tokio-util = { version = "0.7.18", features = ["io", "io-util"] }
 tracing = { version = "0.1.44" }
-tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
-uuid = { version = "1.21.0" }
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
+uuid = { version = "1.22.0" }
 webrtc = { version = "0.17.1" }
 webrtc-media = { version = "0.17.1" }
 

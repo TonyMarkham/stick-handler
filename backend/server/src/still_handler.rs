@@ -1,4 +1,4 @@
-use crate::app_state::{AppState, HsvPresets, HsvRange};
+use crate::app_state::{AppState, HsvPresets, HsvRange, ServerMode};
 
 use axum::{
     extract::{Query, State},
@@ -55,6 +55,13 @@ impl From<HsvRange> for HsvParams {
 
 /// `POST /still/capture` — fires rpicam-still and stores the JPEG in memory.
 pub async fn capture_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    {
+        let mode = state.mode.read().await;
+        if !matches!(*mode, ServerMode::Setup) {
+            return StatusCode::CONFLICT.into_response();
+        }
+    }
+
     let output = match Command::new(CAPTURE_COMMAND)
         .args(["--output", "-", "--encoding", "jpg", "--timeout", "2000"])
         .output()
@@ -79,6 +86,12 @@ pub async fn capture_handler(State(state): State<Arc<AppState>>) -> impl IntoRes
 
 /// `GET /still/original` — returns the raw captured JPEG.
 pub async fn original_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    {
+        let mode = state.mode.read().await;
+        if !matches!(*mode, ServerMode::Setup) {
+            return StatusCode::CONFLICT.into_response();
+        }
+    }
     match state.still_jpeg.read().await.clone() {
         Some(data) => jpeg_response(data),
         None => (StatusCode::NOT_FOUND, "No still captured yet").into_response(),
@@ -87,17 +100,23 @@ pub async fn original_handler(State(state): State<Arc<AppState>>) -> impl IntoRe
 
 /// `GET /still/mask?h_min=&h_max=&s_min=&s_max=&v_min=&v_max=`
 /// Returns a pure black-and-white JPEG: white where pixels fall within the HSV
-/// range, black elsewhere.
+/// range, black elsewhere. Includes `X-Blob-Count` response header.
 pub async fn mask_handler(
     State(state): State<Arc<AppState>>,
     Query(params): Query<HsvParams>,
 ) -> impl IntoResponse {
+    {
+        let mode = state.mode.read().await;
+        if !matches!(*mode, ServerMode::Setup) {
+            return StatusCode::CONFLICT.into_response();
+        }
+    }
     let Some(data) = state.still_jpeg.read().await.clone() else {
         return (StatusCode::NOT_FOUND, "No still captured yet").into_response();
     };
 
     match tokio::task::spawn_blocking(move || build_mask(&data, params)).await {
-        Ok(Ok(out)) => jpeg_response(out),
+        Ok(Ok((out, count))) => jpeg_response_with_count(out, count),
         Ok(Err(e)) => {
             tracing::error!("mask build error: {e}");
             StatusCode::INTERNAL_SERVER_ERROR.into_response()
@@ -111,17 +130,23 @@ pub async fn mask_handler(
 
 /// `GET /still/overlay?h_min=&h_max=&s_min=&s_max=&v_min=&v_max=`
 /// Returns the original image with matching pixels blended 50% toward yellow,
-/// making it easy to see exactly what the filter is catching.
+/// making it easy to see exactly what the filter is catching. Includes `X-Blob-Count`.
 pub async fn overlay_handler(
     State(state): State<Arc<AppState>>,
     Query(params): Query<HsvParams>,
 ) -> impl IntoResponse {
+    {
+        let mode = state.mode.read().await;
+        if !matches!(*mode, ServerMode::Setup) {
+            return StatusCode::CONFLICT.into_response();
+        }
+    }
     let Some(data) = state.still_jpeg.read().await.clone() else {
         return (StatusCode::NOT_FOUND, "No still captured yet").into_response();
     };
 
     match tokio::task::spawn_blocking(move || build_overlay(&data, params)).await {
-        Ok(Ok(out)) => jpeg_response(out),
+        Ok(Ok((out, count))) => jpeg_response_with_count(out, count),
         Ok(Err(e)) => {
             tracing::error!("overlay build error: {e}");
             StatusCode::INTERNAL_SERVER_ERROR.into_response()
@@ -137,7 +162,18 @@ fn jpeg_response(data: Bytes) -> Response {
     ([(header::CONTENT_TYPE, "image/jpeg")], data).into_response()
 }
 
-fn decode_jpeg(data: &Bytes) -> opencv::Result<Mat> {
+fn jpeg_response_with_count(data: Bytes, count: usize) -> Response {
+    use axum::http::{HeaderMap, HeaderName, HeaderValue};
+    let mut headers = HeaderMap::new();
+    headers.insert(header::CONTENT_TYPE, HeaderValue::from_static("image/jpeg"));
+    headers.insert(
+        HeaderName::from_static("x-blob-count"),
+        HeaderValue::from_str(&count.to_string()).unwrap_or(HeaderValue::from_static("0")),
+    );
+    (headers, data).into_response()
+}
+
+pub(crate) fn decode_jpeg(data: &Bytes) -> opencv::Result<Mat> {
     let buf = Vector::<u8>::from_slice(data);
     imgcodecs::imdecode(&buf, imgcodecs::IMREAD_COLOR)
 }
@@ -150,7 +186,7 @@ fn encode_jpeg(mat: &Mat) -> opencv::Result<Bytes> {
 
 /// Converts BGR `src` to HSV and returns a single-channel mask: 255 where
 /// the pixel falls within `params`, 0 elsewhere.
-fn hsv_mask(src: &Mat, params: HsvParams) -> opencv::Result<Mat> {
+pub(crate) fn hsv_mask(src: &Mat, params: HsvParams) -> opencv::Result<Mat> {
     let mut hsv = Mat::default();
     imgproc::cvt_color(src, &mut hsv, imgproc::COLOR_BGR2HSV, 0)?;
 
@@ -172,15 +208,17 @@ fn hsv_mask(src: &Mat, params: HsvParams) -> opencv::Result<Mat> {
     Ok(mask)
 }
 
-fn build_mask(data: &Bytes, params: HsvParams) -> opencv::Result<Bytes> {
+fn build_mask(data: &Bytes, params: HsvParams) -> opencv::Result<(Bytes, usize)> {
     let bgr = decode_jpeg(data)?;
     let mask = hsv_mask(&bgr, params)?;
-    encode_jpeg(&mask)
+    let count = blob_circles(&mask, 20)?.len();
+    Ok((encode_jpeg(&mask)?, count))
 }
 
-fn build_overlay(data: &Bytes, params: HsvParams) -> opencv::Result<Bytes> {
+fn build_overlay(data: &Bytes, params: HsvParams) -> opencv::Result<(Bytes, usize)> {
     let bgr = decode_jpeg(data)?;
     let mask = hsv_mask(&bgr, params)?;
+    let count = blob_circles(&mask, 20)?.len();
 
     // Blend the original 50% with yellow (BGR: 0, 255, 255) across the whole image.
     let yellow = Mat::new_rows_cols_with_default(
@@ -211,13 +249,13 @@ fn build_overlay(data: &Bytes, params: HsvParams) -> opencv::Result<Bytes> {
     let mut result = Mat::default();
     core::bitwise_or(&blend_part, &orig_part, &mut result, &core::no_array())?;
 
-    encode_jpeg(&result)
+    Ok((encode_jpeg(&result)?, count))
 }
 
 /// Returns `(cx, cy, radius)` for the `max_blobs` largest blobs in `mask`,
 /// treating each contour as a circle via `min_enclosing_circle`, ranked by
 /// radius descending.
-fn blob_circles(mask: &Mat, max_blobs: usize) -> opencv::Result<Vec<(f32, f32, f32)>> {
+pub(crate) fn blob_circles(mask: &Mat, max_blobs: usize) -> opencv::Result<Vec<(f32, f32, f32)>> {
     let mask_mut = mask.clone();
     let mut contours: Vector<Vector<core::Point>> = Vector::new();
     imgproc::find_contours(
@@ -361,6 +399,12 @@ fn build_detected(data: &Bytes, presets: HsvPresets) -> opencv::Result<Bytes> {
 /// `GET /still/detected` — yellow overlay on both orange + green blobs, with a
 /// crosshair + circle drawn at the 3 largest orange and 1 largest green blob.
 pub async fn detected_handler(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    {
+        let mode = state.mode.read().await;
+        if !matches!(*mode, ServerMode::Setup) {
+            return StatusCode::CONFLICT.into_response();
+        }
+    }
     let Some(data) = state.still_jpeg.read().await.clone() else {
         return (StatusCode::NOT_FOUND, "No still captured yet").into_response();
     };
