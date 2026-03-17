@@ -37,6 +37,7 @@
                     <ui:Button name="orange-preset-3" text="P3" class="bs preset-btn" />
                     <ui:Button name="orange-preset-4" text="P4" class="bs preset-btn" />
                     <ui:Button name="orange-preset-5" text="P5" class="bs preset-btn" />
+                    <ui:Button name="orange-set-btn" text="Set" class="bs set-btn" />
                 </ui:VisualElement>
             </ui:VisualElement>
 
@@ -49,6 +50,7 @@
                     <ui:Button name="green-preset-3" text="P3" class="bs preset-btn" />
                     <ui:Button name="green-preset-4" text="P4" class="bs preset-btn" />
                     <ui:Button name="green-preset-5" text="P5" class="bs preset-btn" />
+                    <ui:Button name="green-set-btn" text="Set" class="bs set-btn" />
                 </ui:VisualElement>
             </ui:VisualElement>
 

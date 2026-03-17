@@ -17,10 +17,13 @@ public class HsvFilterController : MonoBehaviour
 
     private TextField _ipField;
     private Button    _captureBtn;
+    private Button    _orangeSetBtn;
+    private Button    _greenSetBtn;
     private Label     _statusLabel;
     private SliderInt _hMin, _hMax, _sMin, _sMax, _vMin, _vMax;
 
     private bool      _hasCaptured;
+    private bool      _useDetected;
     private Coroutine _pendingRefresh;
 
     private InputActionReference _aAction;
@@ -70,9 +73,11 @@ public class HsvFilterController : MonoBehaviour
             return;
         }
 
-        _ipField     = root.Q<TextField>("ip-field");
-        _captureBtn  = root.Q<Button>("capture-btn");
-        _statusLabel = root.Q<Label>("status-label");
+        _ipField      = root.Q<TextField>("ip-field");
+        _captureBtn   = root.Q<Button>("capture-btn");
+        _orangeSetBtn = root.Q<Button>("orange-set-btn");
+        _greenSetBtn  = root.Q<Button>("green-set-btn");
+        _statusLabel  = root.Q<Label>("status-label");
         _hMin        = root.Q<SliderInt>("h-min");
         _hMax        = root.Q<SliderInt>("h-max");
         _sMin        = root.Q<SliderInt>("s-min");
@@ -80,9 +85,11 @@ public class HsvFilterController : MonoBehaviour
         _vMin        = root.Q<SliderInt>("v-min");
         _vMax        = root.Q<SliderInt>("v-max");
 
-        if (_ipField     == null) { Debug.LogError("[HsvFilter] 'ip-field' not found");     return; }
-        if (_captureBtn  == null) { Debug.LogError("[HsvFilter] 'capture-btn' not found");  return; }
-        if (_statusLabel == null) { Debug.LogError("[HsvFilter] 'status-label' not found"); return; }
+        if (_ipField      == null) { Debug.LogError("[HsvFilter] 'ip-field' not found");      return; }
+        if (_captureBtn   == null) { Debug.LogError("[HsvFilter] 'capture-btn' not found");   return; }
+        if (_orangeSetBtn == null) { Debug.LogError("[HsvFilter] 'orange-set-btn' not found"); return; }
+        if (_greenSetBtn  == null) { Debug.LogError("[HsvFilter] 'green-set-btn' not found");  return; }
+        if (_statusLabel  == null) { Debug.LogError("[HsvFilter] 'status-label' not found");  return; }
         if (_hMin == null || _hMax == null ||
             _sMin == null || _sMax == null ||
             _vMin == null || _vMax == null)
@@ -92,7 +99,13 @@ public class HsvFilterController : MonoBehaviour
         }
 
         _ipField.value = _defaultHost;
-        _captureBtn.clicked += HandleCapture;
+        _captureBtn.clicked   += HandleCapture;
+        _orangeSetBtn.clicked += HandleSetOrange;
+        _greenSetBtn.clicked  += HandleSetGreen;
+
+        _originalPanel?.EnableToggle();
+        if (_originalPanel != null)
+            _originalPanel.OnToggleChanged += OnDetectedToggleChanged;
 
         _hMin.RegisterValueChangedCallback(OnSliderChanged);
         _hMax.RegisterValueChangedCallback(OnSliderChanged);
@@ -107,7 +120,10 @@ public class HsvFilterController : MonoBehaviour
 
     private void OnDisable()
     {
-        if (_captureBtn != null) _captureBtn.clicked -= HandleCapture;
+        if (_captureBtn   != null) _captureBtn.clicked   -= HandleCapture;
+        if (_orangeSetBtn != null) _orangeSetBtn.clicked -= HandleSetOrange;
+        if (_greenSetBtn  != null) _greenSetBtn.clicked  -= HandleSetGreen;
+        if (_originalPanel != null) _originalPanel.OnToggleChanged -= OnDetectedToggleChanged;
 
         if (_hMin != null) _hMin.UnregisterValueChangedCallback(OnSliderChanged);
         if (_hMax != null) _hMax.UnregisterValueChangedCallback(OnSliderChanged);
@@ -167,6 +183,24 @@ public class HsvFilterController : MonoBehaviour
         }
     }
 
+    // ── Detected toggle ──────────────────────────────────────────────────────
+
+    private void OnDetectedToggleChanged(bool useDetected)
+    {
+        _useDetected = useDetected;
+        if (!_hasCaptured) return;
+
+        StopAllCoroutines();
+        _pendingRefresh = null;
+        StartCoroutine(FetchOriginal());
+    }
+
+    private IEnumerator FetchOriginal()
+    {
+        string endpoint = _useDetected ? "detected" : "original";
+        yield return StartCoroutine(FetchImage($"http://{Host()}:8080/still/{endpoint}", _originalPanel));
+    }
+
     // ── Capture ─────────────────────────────────────────────────────────────
 
     private void HandleCapture()
@@ -197,11 +231,35 @@ public class HsvFilterController : MonoBehaviour
         _hasCaptured = true;
         SetStatus("Fetching images...");
 
-        yield return StartCoroutine(FetchImage($"http://{host}:8080/still/original", _originalPanel));
+        string originalEndpoint = _useDetected ? "detected" : "original";
+        yield return StartCoroutine(FetchImage($"http://{host}:8080/still/{originalEndpoint}", _originalPanel));
         yield return StartCoroutine(FetchMaskAndOverlay());
 
         SetStatus("Ready — adjust sliders to refine");
         _captureBtn.SetEnabled(true);
+    }
+
+    private void HandleSetOrange() => StartCoroutine(PutHsvFilter("orange"));
+    private void HandleSetGreen()  => StartCoroutine(PutHsvFilter("green"));
+
+    private IEnumerator PutHsvFilter(string color)
+    {
+        string json = $"{{\"h_min\":{_hMin.value},\"h_max\":{_hMax.value}," +
+                      $"\"s_min\":{_sMin.value},\"s_max\":{_sMax.value}," +
+                      $"\"v_min\":{_vMin.value},\"v_max\":{_vMax.value}}}";
+
+        byte[] body = System.Text.Encoding.UTF8.GetBytes(json);
+
+        using var req = new UnityWebRequest($"http://{Host()}:8080/hsv/{color}", "PUT");
+        req.uploadHandler   = new UploadHandlerRaw(body);
+        req.downloadHandler = new DownloadHandlerBuffer();
+        req.SetRequestHeader("Content-Type", "application/json");
+        yield return req.SendWebRequest();
+
+        if (req.result != UnityWebRequest.Result.Success)
+            SetStatus($"Set {color} failed: {req.error}");
+        else
+            SetStatus($"{color} filter updated");
     }
 
     // ── Slider debounce ──────────────────────────────────────────────────────

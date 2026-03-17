@@ -6,9 +6,9 @@
                 {
                     "hMin": 0,
                     "hMax": 20,
-                    "sMin": 230,
+                    "sMin": 180,
                     "sMax": 255,
-                    "vMin": 230,
+                    "vMin": 201,
                     "vMax": 255
                 },
                 {

@@ -126,6 +126,14 @@
     padding: 0;
 }
 
+.set-btn {
+    width: 36px;
+    font-size: 11px;
+    margin: 0 2px 0 6px;
+    padding: 0;
+    background-color: rgba(0, 160, 80, 0.9);
+}
+
 /* ── Sliders ─────────────────────────────────────── */
 
 .sliders-col {
