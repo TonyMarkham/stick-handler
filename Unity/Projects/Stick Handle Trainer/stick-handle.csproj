@@ -52,7 +52,6 @@
     <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\CalibrationMenuController.cs" />
     <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\Utilities.cs" />
     <None Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\UIToolkit\CalibrationMenu.uxml" />
-    <None Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Textures\frame_12_svg_slices\manifest.json" />
     <None Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\UIToolkit\CalibrationMenu.uss" />
     <None Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\stick-handle.asmdef" />
     <Reference Include="UnityEngine">
