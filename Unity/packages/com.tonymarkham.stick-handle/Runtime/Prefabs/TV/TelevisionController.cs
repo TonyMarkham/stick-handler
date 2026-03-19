@@ -1,9 +1,14 @@
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace StickHandle.Prefabs.TV
 {
     public class TelevisionController : MonoBehaviour
     {
+        [SerializeField] private GameObject m_BodyGameobject;
+        public GameObject BodyGameobject => m_BodyGameobject;
+        
         [SerializeField] private GameObject m_ButtonGameobject;
         
         [SerializeField] private GameObject m_ScreenGameobject;
@@ -37,9 +42,25 @@ namespace StickHandle.Prefabs.TV
                 return m_ScreenMeshRenderer;
             }
         }
+
+        [SerializeField] private float m_Scale;
+        public float Scale => m_Scale;
         
         [SerializeField] private bool m_IsOn;
         public bool IsOn => m_IsOn;
+        
+        private List<Collider> m_Colliders;
+        public List<Collider> Colliders
+        {
+            get
+            {
+                if(m_Colliders is not null && m_Colliders.Count > 0)
+                    return m_Colliders;
+
+                m_Colliders = GetComponents<Collider>().ToList();
+                return m_Colliders;
+            }
+        }
 
         public void Switch()
         {

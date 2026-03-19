@@ -30,7 +30,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 4556801818365930462}
   m_Father: {fileID: 7232318980752554591}
   m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
 --- !u!33 &8403486910076352188
@@ -116,12 +117,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3486765147965137395}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
-  m_LocalPosition: {x: 1.08326, y: -0.9498673, z: -0.04018416}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -1.0832603, y: -0.9498673, z: 0.04018414}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 7232318980752554591}
+  m_Father: {fileID: 6953685168690789724}
   m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
 --- !u!33 &5554570219033451402
 MeshFilter:
@@ -219,7 +220,6 @@ Transform:
   m_Children:
   - {fileID: 6953685168690789724}
   - {fileID: 8915990148514889373}
-  - {fileID: 4556801818365930462}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &4522797433748980504
@@ -234,10 +234,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 447c5168562c1c046a545371b3471020, type: 3}
   m_Name: 
   m_EditorClassIdentifier: stick-handle::StickHandle.TvOnOff
+  m_BodyGameobject: {fileID: 2853200180337376987}
   m_ButtonGameobject: {fileID: 3486765147965137395}
   m_ScreenGameobject: {fileID: 8599208984217359426}
   m_OnMaterial: {fileID: 2100000, guid: 9220f7b83da78ec45b55470acb358ba0, type: 2}
   m_OffMaterial: {fileID: 2100000, guid: 0c1f74be5bb119947a3f1e1f395c1653, type: 2}
+  m_Scale: 1
   m_IsOn: 0
 --- !u!54 &7887896165288365108
 Rigidbody:
@@ -454,7 +456,7 @@ MonoBehaviour:
   m_SmoothScale: 0
   m_SmoothScaleAmount: 8
   m_TightenScale: 0.1
-  m_ThrowOnDetach: 1
+  m_ThrowOnDetach: 0
   m_ThrowSmoothingDuration: 0.25
   m_ThrowSmoothingCurve:
     serializedVersion: 2

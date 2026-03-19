@@ -47,10 +47,16 @@
     <Analyzer Include="D:\UnityEditor\6000.3.11f1\Editor\Data\Tools\BuildPipeline\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\HsvCalibrationMenuController.cs" />
+    <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\WorldCalibrationData.cs" />
     <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\CenterOnLoad.cs" />
+    <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\StillImagePanelController.cs" />
     <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Prefabs\TV\TelevisionController.cs" />
+    <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\CalibrationModeController.cs" />
     <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\CalibrationMenuController.cs" />
     <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\Utilities.cs" />
+    <None Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\UIToolkit\HsvFilter.uss" />
+    <None Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\UIToolkit\HsvFilter.uxml" />
     <None Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\UIToolkit\CalibrationMenu.uxml" />
     <None Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\UIToolkit\CalibrationMenu.uss" />
     <None Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\stick-handle.asmdef" />
@@ -836,6 +842,9 @@
     </Reference>
     <Reference Include="meta.xr.mrutilitykit">
       <HintPath>D:\git\stick-handler\Unity\Projects\Stick Handle Trainer\Library\ScriptAssemblies\meta.xr.mrutilitykit.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.InputSystem">
+      <HintPath>D:\git\stick-handler\Unity\Projects\Stick Handle Trainer\Library\ScriptAssemblies\Unity.InputSystem.dll</HintPath>
     </Reference>
     <Reference Include="UnityEditor.UI">
       <HintPath>D:\git\stick-handler\Unity\Projects\Stick Handle Trainer\Library\ScriptAssemblies\UnityEditor.UI.dll</HintPath>

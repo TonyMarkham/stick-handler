@@ -1,12 +1,31 @@
 using System;
 using StickHandle.Prefabs.TV;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 
 namespace StickHandle.Scripts
 {
     public class CalibrationMenuController : MonoBehaviour
     {
+        private const string VIDEO_BUTTON_NAME = "video-btn";
+        private const string HSL_BUTTON_NAME = "hsv-btn";
+        private const string WORLD_BUTTON_NAME = "world-btn";
+        
+        [Header("Calibration")]
+        [SerializeField]private CalibrationModeController m_CalibrationModeController;
+        private CalibrationModeController CalibrationModeController
+        {
+            get
+            {
+                if(m_CalibrationModeController)
+                    return m_CalibrationModeController;
+                
+                Debug.LogError("CalibrationModeController is not set");
+                return m_CalibrationModeController;
+            }
+        }
+        
         [SerializeField] private TelevisionController m_TelevisionController;
         private TelevisionController TelevisionController
         {
@@ -81,12 +100,6 @@ namespace StickHandle.Scripts
                     Debug.LogError("Could not  add UIDocument");
                     return null;
                 }
-                
-                if (screenGameobject.AddComponent<BoxCollider>() is not { } boxCollider)
-                {
-                    Debug.LogError("Could not  add BoxCollider");
-                    return null;
-                }
 
                 if (!Utilities.TryGetPixelPerUnitFromPanelSettings(PanelSettings, out float pixelPerUnit))
                 {
@@ -94,28 +107,134 @@ namespace StickHandle.Scripts
                     return null;
                 }
 
-                // boxCollider.size = new Vector3(screenGameobject.transform.localScale.x, screenGameobject.transform.localScale.y, 1);
-                // boxCollider.center = Vector3.zero;
-                
                 Renderer screenRenderer = screenGameobject.GetComponent<Renderer>();
                 screenRenderer.enabled = false;
-                newUIDocument.panelSettings = m_PanelSettings;
-                newUIDocument.visualTreeAsset = m_VisualTreeAsset;
-                newUIDocument.rootVisualElement.styleSheets.Add(m_StyleSheet);
+                newUIDocument.panelSettings = PanelSettings;
+                newUIDocument.visualTreeAsset = VisualTreeAsset;
+                newUIDocument.rootVisualElement.styleSheets.Add(StyleSheet);
                 newUIDocument.worldSpaceSize = new Vector2(pixelPerUnit, pixelPerUnit);
                 m_UIDocument = newUIDocument;
                 
                 return m_UIDocument;
             }
         }
+        
+        private Button m_VideoButton;
+        private Button VideoButton
+        {
+            get
+            {
+               if(m_VideoButton is not null)
+                   return m_VideoButton;
+
+               if (UIDocument.rootVisualElement.Q<Button>(VIDEO_BUTTON_NAME) is not { } button)
+               {
+                   Debug.LogError($"Button [{VIDEO_BUTTON_NAME}] is not set");
+                   return null;
+               }
+               
+               m_VideoButton = button;
+               return m_VideoButton;
+            }
+        }
+        
+        private Button m_HsvButton;
+        private Button HsvButton
+        {
+            get
+            {
+                if(m_HsvButton is not null)
+                    return m_HsvButton;
+
+                if (UIDocument.rootVisualElement.Q<Button>(HSL_BUTTON_NAME) is not { } button)
+                {
+                    Debug.LogError($"Button [{HSL_BUTTON_NAME}] is not set");
+                    return null;
+                }
+               
+                m_HsvButton = button;
+                return m_HsvButton;
+            }
+        }
+        
+        private Button m_WorldButton;
+        private Button WorldButton
+        {
+            get
+            {
+                if(m_WorldButton is not null)
+                    return m_WorldButton;
+
+                if (UIDocument.rootVisualElement.Q<Button>(WORLD_BUTTON_NAME) is not { } button)
+                {
+                    Debug.LogError($"Button [{WORLD_BUTTON_NAME}] is not set");
+                    return null;
+                }
+               
+                m_WorldButton = button;
+                return m_WorldButton;
+            }
+        }
 
         private void OnEnable()
         {
+            if (VideoButton is { } videoButton)
+            {
+                videoButton.clicked += HandleVideoButtonClicked;
+            }
+            
+            if (HsvButton is { } hsvButton)
+            {
+                hsvButton.clicked += HandleHsvButtonClicked;
+            }
+            
+            if (WorldButton is { } worldButton)
+            {
+                worldButton.clicked += HandleWorldButtonClicked;
+            }
+
+            if (!UIDocument.rootVisualElement.styleSheets.Contains(StyleSheet))
+            {
+                UIDocument.rootVisualElement.styleSheets.Add(StyleSheet);
+            }
+            
             if(UIDocument)
             {
                 TelevisionController.Switch(true);
             }
+        }
+
+        private void OnDisable()
+        {
+            if (VideoButton is { } videoButton)
+            {
+                videoButton.clicked -= HandleVideoButtonClicked;
+            }
             
+            if (HsvButton is { } hsvButton)
+            {
+                hsvButton.clicked -= HandleHsvButtonClicked;
+            }
+            
+            if (WorldButton is { } worldButton)
+            {
+                worldButton.clicked -= HandleWorldButtonClicked;
+            }
+        }
+
+        private void HandleVideoButtonClicked()
+        {
+            Debug.LogWarning("Video button clicked");
+        }
+
+        private void HandleHsvButtonClicked()
+        {
+            CalibrationModeController.ActivateHslCalibrationMenu();
+        }
+
+        private void HandleWorldButtonClicked()
+        {
+            Debug.LogWarning("World button clicked");
         }
     }
 }

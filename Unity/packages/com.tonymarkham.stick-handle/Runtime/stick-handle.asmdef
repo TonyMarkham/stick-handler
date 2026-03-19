@@ -3,7 +3,8 @@
     "rootNamespace": "StickHandle",
     "references": [
         "Oculus.VR",
-        "meta.xr.mrutilitykit"
+        "meta.xr.mrutilitykit",
+        "Unity.InputSystem"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
