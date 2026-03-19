@@ -1,0 +1,17 @@
+{
+    "name": "stick-handle",
+    "rootNamespace": "StickHandle",
+    "references": [
+        "Oculus.VR",
+        "meta.xr.mrutilitykit"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

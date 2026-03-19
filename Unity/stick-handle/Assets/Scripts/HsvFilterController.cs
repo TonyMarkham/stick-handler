@@ -9,6 +9,7 @@ public class HsvFilterController : MonoBehaviour
 {
     [SerializeField] private UIDocument _uiDocument;
     [SerializeField] private string _defaultHost = "test-pi";
+    [SerializeField] private WorldCalibrationData _calibrationData;
 
     [Header("Image Panels")]
     [SerializeField] private StillImagePanelController _originalPanel;
@@ -21,10 +22,13 @@ public class HsvFilterController : MonoBehaviour
     private Button    _greenSetBtn;
     private Label     _statusLabel;
     private SliderInt _hMin, _hMax, _sMin, _sMax, _vMin, _vMax;
+    private Label     _orangeBlobCountLabel;
+    private Label     _greenBlobCountLabel;
 
     private bool      _hasCaptured;
     private bool      _useDetected;
     private Coroutine _pendingRefresh;
+    private string    _activeBank; // "orange" or "green" — last bank targeted by Set
 
     private InputActionReference _aAction;
     private HsvPreset            _hoveredPreset;
@@ -97,6 +101,9 @@ public class HsvFilterController : MonoBehaviour
             Debug.LogError("[HsvFilter] One or more HSV sliders not found in UXML");
             return;
         }
+
+        _orangeBlobCountLabel = root.Q<Label>("orange-blob-count-label");
+        _greenBlobCountLabel  = root.Q<Label>("green-blob-count-label");
 
         _ipField.value = _defaultHost;
         _captureBtn.clicked   += HandleCapture;
@@ -239,8 +246,8 @@ public class HsvFilterController : MonoBehaviour
         _captureBtn.SetEnabled(true);
     }
 
-    private void HandleSetOrange() => StartCoroutine(PutHsvFilter("orange"));
-    private void HandleSetGreen()  => StartCoroutine(PutHsvFilter("green"));
+    private void HandleSetOrange() { _activeBank = "orange"; StartCoroutine(PutHsvFilter("orange")); }
+    private void HandleSetGreen()  { _activeBank = "green";  StartCoroutine(PutHsvFilter("green")); }
 
     private IEnumerator PutHsvFilter(string color)
     {
@@ -288,8 +295,8 @@ public class HsvFilterController : MonoBehaviour
 
         SetStatus("Updating...");
 
-        yield return StartCoroutine(FetchImage($"http://{host}:8080/still/mask?{query}",    _maskPanel));
-        yield return StartCoroutine(FetchImage($"http://{host}:8080/still/overlay?{query}", _overlayPanel));
+        yield return StartCoroutine(FetchImage($"http://{host}:8080/still/mask?{query}", _maskPanel));
+        yield return StartCoroutine(FetchOverlayWithCount($"http://{host}:8080/still/overlay?{query}", _overlayPanel));
 
         SetStatus("Ready — adjust sliders to refine");
     }
@@ -308,6 +315,54 @@ public class HsvFilterController : MonoBehaviour
         }
 
         panel.SetTexture(DownloadHandlerTexture.GetContent(req));
+    }
+
+    private IEnumerator FetchOverlayWithCount(string url, StillImagePanelController panel)
+    {
+        if (panel == null) yield break;
+
+        using var req = UnityWebRequestTexture.GetTexture(url);
+        yield return req.SendWebRequest();
+
+        if (req.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogWarning($"[HsvFilter] FetchOverlayWithCount failed for {url}: {req.error}");
+            yield break;
+        }
+
+        panel.SetTexture(DownloadHandlerTexture.GetContent(req));
+
+        string countHeader = req.GetResponseHeader("X-Blob-Count");
+        if (_activeBank != null && int.TryParse(countHeader, out int count))
+            UpdateBlobCount(_activeBank, count);
+    }
+
+    private void UpdateBlobCount(string bank, int count)
+    {
+        if (bank == "orange")
+        {
+            bool valid = count == 4;
+            if (_orangeBlobCountLabel != null)
+            {
+                _orangeBlobCountLabel.text = valid ? "4 blobs ✓" : $"{count} blobs ✗ — must be 4";
+                _orangeBlobCountLabel.style.color = valid
+                    ? new StyleColor(new Color(0.2f, 0.8f, 0.2f))
+                    : new StyleColor(new Color(1f, 0.3f, 0.3f));
+            }
+            if (_calibrationData != null) _calibrationData.orangeValid = valid;
+        }
+        else if (bank == "green")
+        {
+            bool valid = count == 1;
+            if (_greenBlobCountLabel != null)
+            {
+                _greenBlobCountLabel.text = valid ? "1 blob ✓" : $"{count} blobs ✗ — must be 1";
+                _greenBlobCountLabel.style.color = valid
+                    ? new StyleColor(new Color(0.2f, 0.8f, 0.2f))
+                    : new StyleColor(new Color(1f, 0.3f, 0.3f));
+            }
+            if (_calibrationData != null) _calibrationData.greenValid = valid;
+        }
     }
 
     // ── Presets ──────────────────────────────────────────────────────────────

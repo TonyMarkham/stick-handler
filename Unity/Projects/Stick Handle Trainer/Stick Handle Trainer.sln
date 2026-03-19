@@ -1,0 +1,45 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "stick-handle", "stick-handle.csproj", "{b452fdb0-2cb3-197e-63ad-abcf69a8f5c8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "unity-utilities-editor", "unity-utilities-editor.csproj", "{794be5da-24b7-7214-8f95-e072a587650e}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gltforge.Runtime", "Gltforge.Runtime.csproj", "{e0c800c0-eaa5-87e7-aa79-a5a91fe45281}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gltforge.Editor", "Gltforge.Editor.csproj", "{61cad464-07a0-23cc-9ab2-00f5b870c032}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp", "Assembly-CSharp.csproj", "{5fc6f625-9012-74ca-f13a-3c68f4aa8d3c}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "stick-handle-editor", "stick-handle-editor.csproj", "{b2ebf0f2-7c61-6c0e-9d26-73aa752cdbc2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp-firstpass", "Assembly-CSharp-firstpass.csproj", "{50dc9f37-18a4-35c0-8219-d618e98bcb1a}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "unity-utilities", "unity-utilities.csproj", "{9d506a94-28ea-ad81-78d3-640cceb1e5be}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{b452fdb0-2cb3-197e-63ad-abcf69a8f5c8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{b452fdb0-2cb3-197e-63ad-abcf69a8f5c8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{794be5da-24b7-7214-8f95-e072a587650e}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{794be5da-24b7-7214-8f95-e072a587650e}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{e0c800c0-eaa5-87e7-aa79-a5a91fe45281}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{e0c800c0-eaa5-87e7-aa79-a5a91fe45281}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{61cad464-07a0-23cc-9ab2-00f5b870c032}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{61cad464-07a0-23cc-9ab2-00f5b870c032}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5fc6f625-9012-74ca-f13a-3c68f4aa8d3c}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5fc6f625-9012-74ca-f13a-3c68f4aa8d3c}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{b2ebf0f2-7c61-6c0e-9d26-73aa752cdbc2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{b2ebf0f2-7c61-6c0e-9d26-73aa752cdbc2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{50dc9f37-18a4-35c0-8219-d618e98bcb1a}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{50dc9f37-18a4-35c0-8219-d618e98bcb1a}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9d506a94-28ea-ad81-78d3-640cceb1e5be}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9d506a94-28ea-ad81-78d3-640cceb1e5be}.Debug|Any CPU.Build.0 = Debug|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

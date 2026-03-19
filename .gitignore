@@ -25,6 +25,15 @@ pm.bat
 /Unity/stick-handle/.vscode/
 /Unity/stick-handle/Build/
 
+/Unity/Projects/Stick Handle Trainer/Library/
+/Unity/Projects/Stick Handle Trainer/Logs/
+/Unity/Projects/Stick Handle Trainer/obj/
+/Unity/Projects/Stick Handle Trainer/Temp/
+/Unity/Projects/Stick Handle Trainer/UserSettings/
+/Unity/Projects/Stick Handle Trainer/.utmp/
+/Unity/Projects/Stick Handle Trainer/.vscode/
+/Unity/Projects/Stick Handle Trainer/Build/
+
 # Unity generated assets — do not commit
 /Unity/stick-handle/Assets/Resources/OVRBuildConfig.asset
 /Unity/stick-handle/Assets/Resources/OVRBuildConfig.asset.meta

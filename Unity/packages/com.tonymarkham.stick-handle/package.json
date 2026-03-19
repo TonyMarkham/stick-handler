@@ -1,0 +1,13 @@
+{
+  "name": "com.tonymarkham.stick-handle",
+  "version": "0.1.0",
+  "displayName": "Stick Handle",
+  "description": "Stick Handle game scripts and calibration system.",
+  "unity": "2022.3",
+  "author": {
+    "name": "Tony Markham"
+  },
+  "license": "MIT",
+  "keywords": [],
+  "dependencies": {}
+}

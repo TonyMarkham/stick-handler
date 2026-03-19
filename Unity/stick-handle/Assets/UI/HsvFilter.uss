@@ -134,6 +134,15 @@
     background-color: rgba(0, 160, 80, 0.9);
 }
 
+/* ── Blob count badges ───────────────────────────── */
+
+.blob-count-label {
+    font-size: 11px;
+    color: rgb(200, 200, 200);
+    margin-left: 6px;
+    align-self: center;
+}
+
 /* ── Sliders ─────────────────────────────────────── */
 
 .sliders-col {

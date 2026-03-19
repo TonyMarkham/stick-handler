@@ -39,6 +39,7 @@
                     <ui:Button name="orange-preset-5" text="P5" class="bs preset-btn" />
                     <ui:Button name="orange-set-btn" text="Set" class="bs set-btn" />
                 </ui:VisualElement>
+                <ui:Label name="orange-blob-count-label" text="" class="blob-count-label" />
             </ui:VisualElement>
 
             <!-- Green Bank -->
@@ -52,6 +53,7 @@
                     <ui:Button name="green-preset-5" text="P5" class="bs preset-btn" />
                     <ui:Button name="green-set-btn" text="Set" class="bs set-btn" />
                 </ui:VisualElement>
+                <ui:Label name="green-blob-count-label" text="" class="blob-count-label" />
             </ui:VisualElement>
 
         </ui:VisualElement>

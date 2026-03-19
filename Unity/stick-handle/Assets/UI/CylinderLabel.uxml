@@ -1,0 +1,4 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/CylinderLabel.uss"/>
+    <ui:Label name="cylinder-label" text="1" class="cylinder-label" />
+</ui:UXML>

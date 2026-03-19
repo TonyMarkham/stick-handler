@@ -1,0 +1,74 @@
+:root {
+    --btn-height: 30px;
+}
+
+.world-panel {
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 12px;
+    background-color: rgba(0, 0, 0, 0.75);
+    width: 100%;
+    height: 100%;
+}
+
+/* ── Header ─────────────────────────────────────── */
+
+.header {
+    flex-direction: row;
+    align-items: center;
+    align-self: stretch;
+    margin-bottom: 8px;
+}
+
+.title {
+    font-size: 16px;
+    color: whitesmoke;
+    margin-left: 8px;
+}
+
+/* ── Labels ─────────────────────────────────────── */
+
+.status {
+    font-size: 13px;
+    color: rgb(200, 200, 200);
+    -unity-text-align: middle-center;
+    margin-bottom: 6px;
+}
+
+.error {
+    font-size: 13px;
+    color: rgb(255, 80, 80);
+    -unity-text-align: middle-center;
+    margin-bottom: 6px;
+    display: none;
+}
+
+/* ── Buttons ─────────────────────────────────────── */
+
+.bs {
+    font-size: 16px;
+    height: var(--btn-height);
+    background-color: rgba(0, 120, 215, 0.9);
+    color: white;
+    border-radius: 6px;
+    margin: 4px;
+}
+
+.bs:hover {
+    background-color: rgb(200, 20, 20);
+}
+
+.bs:active {
+    background-color: rgb(32, 200, 20);
+}
+
+.back-btn {
+    width: 70px;
+    font-size: 13px;
+}
+
+.save-btn {
+    width: 160px;
+    margin-top: 8px;
+}

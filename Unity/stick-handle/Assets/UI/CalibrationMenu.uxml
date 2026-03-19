@@ -4,5 +4,6 @@
         <ui:Label text="Calibration" class="title" />
         <ui:Button name="video-btn" text="Video Tools" class="bs menu-btn" />
         <ui:Button name="hsv-btn" text="HSV Filter" class="bs menu-btn" />
+        <ui:Button name="world-btn" text="World Orient" class="bs menu-btn" />
     </ui:VisualElement>
 </ui:UXML>

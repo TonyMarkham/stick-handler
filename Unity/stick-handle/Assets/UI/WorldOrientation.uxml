@@ -1,0 +1,12 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/WorldOrientation.uss"/>
+    <ui:VisualElement name="root" class="world-panel">
+        <ui:VisualElement class="header">
+            <ui:Button name="back-btn" text="← Back" class="bs back-btn" />
+            <ui:Label text="World Orientation" class="title" />
+        </ui:VisualElement>
+        <ui:Label name="status-label" text="Place cylinders on orange stickers" class="status" />
+        <ui:Label name="error-label" text="" class="error" />
+        <ui:Button name="save-btn" text="Save Positions" class="bs save-btn" />
+    </ui:VisualElement>
+</ui:UXML>
