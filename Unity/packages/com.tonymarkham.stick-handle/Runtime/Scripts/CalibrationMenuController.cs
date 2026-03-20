@@ -85,7 +85,16 @@ namespace StickHandle.Scripts
 
         private void OnEnable()
         {
-            ResolveElements();
+            try
+            {
+                ResolveElements();
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+                Application.Quit(1);
+                return;
+            }
 
             if (!m_UiDocument.rootVisualElement.styleSheets.Contains(m_StyleSheet))
                 m_UiDocument.rootVisualElement.styleSheets.Add(m_StyleSheet);

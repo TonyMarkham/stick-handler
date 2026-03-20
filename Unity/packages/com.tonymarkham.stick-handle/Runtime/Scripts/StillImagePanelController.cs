@@ -136,7 +136,16 @@ namespace StickHandle.Scripts
         {
             yield return null;
 
-            ResolveElements();
+            try
+            {
+                ResolveElements();
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+                Application.Quit(1);
+                yield break;
+            }
 
             LabelElement.text = m_Label;
 
