@@ -10,6 +10,10 @@ This package targets **Unity 6000.3**. Do not flag issues that are only relevant
 
 `serverHostAddress` has a default value of `"test-pi:8080"` and is never null or empty unless explicitly cleared. Do not flag null/empty host address as a concern.
 
+## CenterOnLoad
+
+`CenterOnLoad` uses `Start` (not `OnEnable`) to subscribe to `MRUK.SceneLoadedEvent` because `MRUK.Instance` is not available during `OnEnable`. It uses `OnDisable` (not `OnDestroy`) for cleanup, with a null guard on `MRUK.Instance` to handle singleton teardown ordering. This is intentional — do not flag it as a lifecycle inconsistency. The GO is only ever disabled on app exit and the event fires at most once per runtime.
+
 ## UI Component Design
 
 UIDocument/UXML-backed MonoBehaviours in this package use a **fail-fast design by convention**: `ResolveElements()` throws `InvalidOperationException` on any missing element, and `Awake` throws `MissingReferenceException` for unset inspector refs. UI element fields are guaranteed valid after `OnEnable` or the component never reaches a running state. Do not flag missing null guards on UI element fields as issues.

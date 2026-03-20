@@ -1,3 +1,4 @@
+using StickHandle.Scripts.Attributes;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -8,51 +9,42 @@ namespace StickHandle.Scripts
         private const string CLASS_NAME = nameof(CalibrationModeController);
 
         [Header("World Calibration Data")]
-        [SerializeField] private WorldCalibrationData m_WorldCalibrationData;
+        [RequiredRef, SerializeField] private WorldCalibrationData m_WorldCalibrationData;
         public WorldCalibrationData WorldCalibrationData => m_WorldCalibrationData;
         
         [Header("Input Actions")]
-        [SerializeField] private InputActionReference m_LeftXButtonAction;
-        [SerializeField] private InputActionReference m_RightAButtonAction;
+        [RequiredRef, SerializeField] private InputActionReference m_LeftXButtonAction;
+        [RequiredRef, SerializeField] private InputActionReference m_RightAButtonAction;
         
         [Header("Calibration")]
-        [SerializeField] private GameObject m_ConfigurationMenuGameObject;
-        [SerializeField] private GameObject m_HsvConfigurationMenuGameObject;
-        
+        [RequiredRef, SerializeField] private GameObject m_ConfigurationMenuGameObject;
+        [RequiredRef, SerializeField] private GameObject m_HsvConfigurationMenuGameObject;
+
+        private void Awake()
+        {
+            if (!m_WorldCalibrationData)           throw new MissingReferenceException($"[{CLASS_NAME}] WorldCalibrationData is not set");
+            if (!m_ConfigurationMenuGameObject)    throw new MissingReferenceException($"[{CLASS_NAME}] ConfigurationMenuGameObject is not set");
+            if (!m_HsvConfigurationMenuGameObject) throw new MissingReferenceException($"[{CLASS_NAME}] HsvConfigurationMenuGameObject is not set");
+            if (!m_LeftXButtonAction)              throw new MissingReferenceException($"[{CLASS_NAME}] LeftXButtonAction is not set");
+            if (!m_RightAButtonAction)             throw new MissingReferenceException($"[{CLASS_NAME}] RightAButtonAction is not set");
+        }
+
         private void OnEnable()
         {
             ActivateMasterCalibrationMenu();
 
-            if (!m_LeftXButtonAction)
-            {
-                Debug.LogError($"[{CLASS_NAME}] Left X Button Action not set");
-            }
-            else
-            {
-                m_LeftXButtonAction.action.Enable();
-                m_LeftXButtonAction.action.performed += HandleToggleCalibrationMode;
-            }
-            
-            if (!m_RightAButtonAction)
-            {
-                Debug.LogError($"[{CLASS_NAME}] Right A Button Action not set");
-            }
-            else
-            {
-                m_RightAButtonAction.action.Enable();
-            }
+            m_LeftXButtonAction.action.Enable();
+            m_LeftXButtonAction.action.performed += HandleToggleCalibrationMode;
+
+            m_RightAButtonAction.action.Enable();
         }
 
         private void OnDisable()
         {
-            if (m_LeftXButtonAction)
-            {
-                m_LeftXButtonAction.action.performed -= HandleToggleCalibrationMode;
-                m_LeftXButtonAction.action.Disable();
-            }
+            m_LeftXButtonAction.action.performed -= HandleToggleCalibrationMode;
+            m_LeftXButtonAction.action.Disable();
 
-            if (m_RightAButtonAction)
-                m_RightAButtonAction.action.Disable();
+            m_RightAButtonAction.action.Disable();
         }
 
         public void ActivateMasterCalibrationMenu()
@@ -74,13 +66,8 @@ namespace StickHandle.Scripts
 
         public bool GetRightAButtonAction(out InputActionReference rightAButtonAction)
         {
-            rightAButtonAction =  m_RightAButtonAction;
-            
-            if (m_RightAButtonAction)
-                return true;
-            
-            Debug.LogError($"[{CLASS_NAME}] Right A Button Action not set");
-            return false;
+            rightAButtonAction = m_RightAButtonAction;
+            return true;
         }
     }
 }

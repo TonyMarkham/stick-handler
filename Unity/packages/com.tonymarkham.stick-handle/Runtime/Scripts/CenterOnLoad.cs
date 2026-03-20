@@ -11,9 +11,10 @@ namespace StickHandle.Scripts
             MRUK.Instance.SceneLoadedEvent.AddListener(OnSceneLoaded);
         }
 
-        private void OnDestroy()
+        private void OnDisable()
         {
-            MRUK.Instance.SceneLoadedEvent.RemoveListener(OnSceneLoaded);
+            if (MRUK.Instance != null)
+                MRUK.Instance.SceneLoadedEvent.RemoveListener(OnSceneLoaded);
         }
 
         void OnSceneLoaded()

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.IO;
+using Newtonsoft.Json;
 using StickHandle.Prefabs.TV;
 using StickHandle.Scripts.Attributes;
 using UnityEngine;
@@ -22,8 +23,28 @@ namespace StickHandle.Scripts
     [RequiredUxmlElement(typeof(SliderInt),  MAX_VALUE_SLIDER_NAME)]
     [RequiredUxmlElement(typeof(Label),      ORANGE_BLOB_COUNT_LABEL_NAME)]
     [RequiredUxmlElement(typeof(Button),     ORANGE_SET_BUTTON_NAME)]
+    [RequiredUxmlElement(typeof(Button),     ORANGE_PRESET_01_BUTTON_NAME)]
+    [RequiredUxmlElement(typeof(Button),     ORANGE_PRESET_02_BUTTON_NAME)]
+    [RequiredUxmlElement(typeof(Button),     ORANGE_PRESET_03_BUTTON_NAME)]
+    [RequiredUxmlElement(typeof(Button),     ORANGE_PRESET_04_BUTTON_NAME)]
+    [RequiredUxmlElement(typeof(Button),     ORANGE_PRESET_05_BUTTON_NAME)]
+    [RequiredUxmlElement(typeof(SavingOverlay), ORANGE_PRESET_01_OVERLAY_NAME)]
+    [RequiredUxmlElement(typeof(SavingOverlay), ORANGE_PRESET_02_OVERLAY_NAME)]
+    [RequiredUxmlElement(typeof(SavingOverlay), ORANGE_PRESET_03_OVERLAY_NAME)]
+    [RequiredUxmlElement(typeof(SavingOverlay), ORANGE_PRESET_04_OVERLAY_NAME)]
+    [RequiredUxmlElement(typeof(SavingOverlay), ORANGE_PRESET_05_OVERLAY_NAME)]
     [RequiredUxmlElement(typeof(Label),      GREEN_BLOB_COUNT_LABEL_NAME)]
     [RequiredUxmlElement(typeof(Button),     GREEN_SET_BUTTON_NAME)]
+    [RequiredUxmlElement(typeof(Button),     GREEN_PRESET_01_BUTTON_NAME)]
+    [RequiredUxmlElement(typeof(Button),     GREEN_PRESET_02_BUTTON_NAME)]
+    [RequiredUxmlElement(typeof(Button),     GREEN_PRESET_03_BUTTON_NAME)]
+    [RequiredUxmlElement(typeof(Button),     GREEN_PRESET_04_BUTTON_NAME)]
+    [RequiredUxmlElement(typeof(Button),     GREEN_PRESET_05_BUTTON_NAME)]
+    [RequiredUxmlElement(typeof(SavingOverlay), GREEN_PRESET_01_OVERLAY_NAME)]
+    [RequiredUxmlElement(typeof(SavingOverlay), GREEN_PRESET_02_OVERLAY_NAME)]
+    [RequiredUxmlElement(typeof(SavingOverlay), GREEN_PRESET_03_OVERLAY_NAME)]
+    [RequiredUxmlElement(typeof(SavingOverlay), GREEN_PRESET_04_OVERLAY_NAME)]
+    [RequiredUxmlElement(typeof(SavingOverlay), GREEN_PRESET_05_OVERLAY_NAME)]
     public class HsvCalibrationMenuController : MonoBehaviour
     {
         private const string CLASS_NAME = nameof(HsvCalibrationMenuController);
@@ -99,14 +120,14 @@ namespace StickHandle.Scripts
         [RequiredRef, SerializeField] private StyleSheet m_ImagePanelStyleSheet;
         public StyleSheet ImagePanelStyleSheet => m_ImagePanelStyleSheet;
 
-        [Header("Original Image Panel")] [SerializeField]
-        private StillImagePanelController m_OriginalPanel;
+        [Header("Original Image Panel")]
+        [RequiredRef, SerializeField] private StillImagePanelController m_OriginalPanel;
 
-        [Header("Mask Image Panel")] [SerializeField]
-        private StillImagePanelController m_MaskPanel;
+        [Header("Mask Image Panel")]
+        [RequiredRef, SerializeField] private StillImagePanelController m_MaskPanel;
 
-        [Header("Overlay Image Panel")] [SerializeField]
-        private StillImagePanelController m_OverlayPanel;
+        [Header("Overlay Image Panel")]
+        [RequiredRef, SerializeField] private StillImagePanelController m_OverlayPanel;
 
         private PresetConfig m_PresetConfig;
 
@@ -117,6 +138,7 @@ namespace StickHandle.Scripts
         private Button m_HoveredBtn;
         private float m_AHoldTime;
         private float m_SaveCompleteCooldown;
+        private bool m_SavedThisHover;
         private const float SAVE_HOLD_DURATION        = 3f;
         private const float HSV_HUE_MAX              = HsvPreset.HUE_MAX;
         private const float HSV_SATURATION_VALUE_MAX = HsvPreset.SATURATION_VALUE_MAX;
@@ -288,6 +310,9 @@ namespace StickHandle.Scripts
             if (!m_StyleSheet)                throw new MissingReferenceException($"[{CLASS_NAME}] m_StyleSheet is not set");
             if (!m_ImagePanelUxml)            throw new MissingReferenceException($"[{CLASS_NAME}] m_ImagePanelUxml is not set");
             if (!m_ImagePanelStyleSheet)      throw new MissingReferenceException($"[{CLASS_NAME}] m_ImagePanelStyleSheet is not set");
+            if (!m_OriginalPanel)             throw new MissingReferenceException($"[{CLASS_NAME}] OriginalPanel is not set");
+            if (!m_MaskPanel)                 throw new MissingReferenceException($"[{CLASS_NAME}] MaskPanel is not set");
+            if (!m_OverlayPanel)              throw new MissingReferenceException($"[{CLASS_NAME}] OverlayPanel is not set");
 
             m_PixelsPerUnit = m_PanelSettings.PixelsPerUnitReflection();
 
@@ -332,11 +357,7 @@ namespace StickHandle.Scripts
             if (!m_UiDocument.rootVisualElement.styleSheets.Contains(m_StyleSheet))
                 m_UiDocument.rootVisualElement.styleSheets.Add(m_StyleSheet);
 
-            if (CalibrationModeController?.WorldCalibrationData != null
-                && CalibrationModeController.WorldCalibrationData.serverHostAddress is not null)
-            {
-                ServerNameTextField.value = CalibrationModeController.WorldCalibrationData.serverHostAddress;
-            }
+            ServerNameTextField.value = CalibrationModeController.WorldCalibrationData.serverHostAddress;
 
             CaptureButton.clicked    += HandleCapture;
             BackButton.clicked       += HandleBack;
@@ -349,6 +370,8 @@ namespace StickHandle.Scripts
             MaxSaturationSlider.RegisterValueChangedCallback(OnSliderChanged);
             MinValueSlider.RegisterValueChangedCallback(OnSliderChanged);
             MaxValueSlider.RegisterValueChangedCallback(OnSliderChanged);
+
+            SyncSliderBounds();
 
             m_OriginalPanel.OnToggleChanged += OnDetectedToggleChanged;
 
@@ -590,10 +613,22 @@ namespace StickHandle.Scripts
 
         private void OnSliderChanged(ChangeEvent<int> _)
         {
+            SyncSliderBounds();
+
             if (!m_HasCaptured) return;
 
             if (m_PendingRefresh != null) StopCoroutine(m_PendingRefresh);
             m_PendingRefresh = StartCoroutine(DebouncedRefresh());
+        }
+
+        private void SyncSliderBounds()
+        {
+            MinHueSlider.highValue        = MaxHueSlider.value;
+            MaxHueSlider.lowValue         = MinHueSlider.value;
+            MinSaturationSlider.highValue = MaxSaturationSlider.value;
+            MaxSaturationSlider.lowValue  = MinSaturationSlider.value;
+            MinValueSlider.highValue      = MaxValueSlider.value;
+            MaxValueSlider.lowValue       = MinValueSlider.value;
         }
 
         private IEnumerator DebouncedRefresh()
@@ -611,14 +646,14 @@ namespace StickHandle.Scripts
             if (!m_HasCaptured) return;
 
             if (m_PendingRefresh != null) StopCoroutine(m_PendingRefresh);
-            m_PendingRefresh = null;
-            StartCoroutine(FetchOriginal());
+            m_PendingRefresh = StartCoroutine(FetchOriginal());
         }
 
         private IEnumerator FetchOriginal()
         {
             string endpoint = m_UseDetected ? "detected" : "original";
             yield return StartCoroutine(FetchImage($"http://{Host()}/still/{endpoint}", m_OriginalPanel));
+            m_PendingRefresh = null;
         }
 
         // ── A-button hold-to-save ────────────────────────────────────────────────
@@ -642,7 +677,7 @@ namespace StickHandle.Scripts
                 return;
             }
 
-            if (m_InputActionReference.action.IsPressed())
+            if (m_InputActionReference.action.IsPressed() && !m_SavedThisHover)
             {
                 if (!m_HoveredOverlay.visible)
                 {
@@ -664,6 +699,7 @@ namespace StickHandle.Scripts
                     SavePresets();
                     m_HoveredBtn.style.backgroundColor = new StyleColor(MedianHsvColor(m_HoveredPreset));
 
+                    m_SavedThisHover       = true;
                     m_AHoldTime            = 0;
                     m_SaveCompleteCooldown = 0.5f;
                 }
@@ -693,24 +729,24 @@ namespace StickHandle.Scripts
             string json = File.ReadAllText(srcPath);
             Debug.Log($"[{CLASS_NAME}] Loaded presets from {srcPath}");
 #else
-        // On device: copy from StreamingAssets to persistentDataPath once, then load from there
-        // (allows on-device edits via adb to persist across sessions)
-        string destPath = Path.Combine(Application.persistentDataPath, PRESET_FILE_NAME);
-        if (!File.Exists(destPath))
-        {
-            if (!File.Exists(srcPath))
+            // On device: copy from StreamingAssets to persistentDataPath once, then load from there
+            // (allows on-device edits via adb to persist across sessions)
+            string destPath = Path.Combine(Application.persistentDataPath, PRESET_FILE_NAME);
+            if (!File.Exists(destPath))
             {
-                Debug.LogError($"[{CLASS_NAME}] Default preset file not found at {srcPath}");
-                return null;
+                if (!File.Exists(srcPath))
+                {
+                    Debug.LogError($"[{CLASS_NAME}] Default preset file not found at {srcPath}");
+                    return null;
+                }
+                File.Copy(srcPath, destPath);
+                Debug.Log($"[{CLASS_NAME}] Copied default presets to {destPath}");
             }
-            File.Copy(srcPath, destPath);
-            Debug.Log($"[{CLASS_NAME}] Copied default presets to {destPath}");
-        }
-        string json = File.ReadAllText(destPath);
-        Debug.Log($"[{CLASS_NAME}] Loaded presets from {destPath}");
+            string json = File.ReadAllText(destPath);
+            Debug.Log($"[{CLASS_NAME}] Loaded presets from {destPath}");
 #endif
 
-            return JsonUtility.FromJson<PresetConfig>(json);
+            return JsonConvert.DeserializeObject<PresetConfig>(json);
         }
 
         private void WirePresetBank(PresetBank bank,
@@ -763,15 +799,16 @@ namespace StickHandle.Scripts
             if (btn == m_GreenPreset3)  return m_GreenPreset3Overlay;
             if (btn == m_GreenPreset4)  return m_GreenPreset4Overlay;
             if (btn == m_GreenPreset5)  return m_GreenPreset5Overlay;
-            return null;
+            throw new InvalidOperationException($"[{CLASS_NAME}] No overlay mapped for button '{btn.name}'");
         }
 
         private void HandlePresetEnter(PointerEnterEvent evt)
         {
             var btn = (Button)evt.target;
-            m_HoveredPreset  = (HsvPreset)btn.userData;
-            m_HoveredOverlay = OverlayForButton(btn);
-            m_HoveredBtn     = btn;
+            m_HoveredPreset    = (HsvPreset)btn.userData;
+            m_HoveredOverlay   = OverlayForButton(btn);
+            m_HoveredBtn       = btn;
+            m_SavedThisHover   = false;
         }
 
         private void HandlePresetLeave(PointerLeaveEvent evt)
@@ -791,23 +828,34 @@ namespace StickHandle.Scripts
 
         private void SavePresets()
         {
-            string json = JsonUtility.ToJson(m_PresetConfig, true);
+            string json = JsonConvert.SerializeObject(m_PresetConfig, Formatting.Indented);
+            try
+            {
 #if UNITY_EDITOR
-            File.WriteAllText(Path.Combine(Application.streamingAssetsPath, PRESET_FILE_NAME), json);
+                File.WriteAllText(Path.Combine(Application.streamingAssetsPath, PRESET_FILE_NAME), json);
 #else
-        File.WriteAllText(Path.Combine(Application.persistentDataPath, PRESET_FILE_NAME), json);
+                File.WriteAllText(Path.Combine(Application.persistentDataPath, PRESET_FILE_NAME), json);
 #endif
-            Debug.Log($"[{CLASS_NAME}] Presets saved");
+                Debug.Log($"[{CLASS_NAME}] Presets saved");
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[{CLASS_NAME}] Failed to save presets: {e.Message}");
+                m_AHoldTime = 0;
+                m_HoveredOverlay.Hide();
+                m_HoveredBtn.RemoveFromClassList(USS_PRESET_SAVING);
+            }
         }
 
         private void ApplyPreset(HsvPreset p)
         {
-            MinHueSlider.value = p.hMin;
-            MaxHueSlider.value = p.hMax;
-            MinSaturationSlider.value = p.sMin;
-            MaxSaturationSlider.value = p.sMax;
-            MinValueSlider.value = p.vMin;
-            MaxValueSlider.value = p.vMax;
+            MaxHueSlider.SetValueWithoutNotify(p.hMax);
+            MinHueSlider.SetValueWithoutNotify(p.hMin);
+            MaxSaturationSlider.SetValueWithoutNotify(p.sMax);
+            MinSaturationSlider.SetValueWithoutNotify(p.sMin);
+            MaxValueSlider.SetValueWithoutNotify(p.vMax);
+            MinValueSlider.SetValueWithoutNotify(p.vMin);
+            SyncSliderBounds();
         }
 
         private static Color MedianHsvColor(HsvPreset p) =>
