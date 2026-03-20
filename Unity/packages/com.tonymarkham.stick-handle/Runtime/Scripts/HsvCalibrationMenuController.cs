@@ -87,6 +87,7 @@ namespace StickHandle.Scripts
         private StyleSheet StyleSheet => m_StyleSheet;
 
         private UIDocument m_UiDocument;
+        private float m_PixelsPerUnit;
 
         [Header("Common Image Panel")]
         [RequiredRef, SerializeField] private VisualTreeAsset m_ImagePanelUxml;
@@ -283,7 +284,7 @@ namespace StickHandle.Scripts
             if (!m_ImagePanelUxml)            throw new MissingReferenceException($"[{CLASS_NAME}] m_ImagePanelUxml is not set");
             if (!m_ImagePanelStyleSheet)      throw new MissingReferenceException($"[{CLASS_NAME}] m_ImagePanelStyleSheet is not set");
 
-            float pixelPerUnit = m_PanelSettings.PixelsPerUnitReflection();
+            m_PixelsPerUnit = m_PanelSettings.PixelsPerUnitReflection();
 
             // Scale the Settings UI TV
             TelevisionController.BodyGameobject.transform.localScale = Vector3.one * TelevisionController.Scale;
@@ -306,8 +307,8 @@ namespace StickHandle.Scripts
             m_UiDocument.visualTreeAsset = VisualTreeAsset;
             m_UiDocument.rootVisualElement.styleSheets.Add(StyleSheet);
             m_UiDocument.worldSpaceSize = new Vector2(
-                pixelPerUnit * TelevisionController.Scale,
-                pixelPerUnit * TelevisionController.Scale);
+                m_PixelsPerUnit * TelevisionController.Scale,
+                m_PixelsPerUnit * TelevisionController.Scale);
         }
 
         private void OnEnable()

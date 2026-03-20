@@ -37,6 +37,10 @@ namespace StickHandle.Scripts
             {
                 Debug.LogError($"[{CLASS_NAME}] Right A Button Action not set");
             }
+            else
+            {
+                m_RightAButtonAction.action.Enable();
+            }
         }
 
         private void OnDisable()
@@ -46,6 +50,9 @@ namespace StickHandle.Scripts
                 m_LeftXButtonAction.action.performed -= HandleToggleCalibrationMode;
                 m_LeftXButtonAction.action.Disable();
             }
+
+            if (m_RightAButtonAction)
+                m_RightAButtonAction.action.Disable();
         }
 
         public void ActivateMasterCalibrationMenu()
@@ -54,7 +61,7 @@ namespace StickHandle.Scripts
             m_HsvConfigurationMenuGameObject.SetActive(false);
         }
 
-        public void ActivateHslCalibrationMenu()
+        public void ActivateHsvCalibrationMenu()
         {
             m_HsvConfigurationMenuGameObject.SetActive(true);
             m_ConfigurationMenuGameObject.SetActive(false);

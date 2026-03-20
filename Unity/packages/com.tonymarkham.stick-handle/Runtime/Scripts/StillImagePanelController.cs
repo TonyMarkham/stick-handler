@@ -70,6 +70,7 @@ namespace StickHandle.Scripts
         /// </summary>
         private Texture2D m_CurrentTexture;
         private UIDocument m_UiDocument;
+        private float m_PixelsPerUnit;
 
         // ── UI Elements ──────────────────────────────────────────────────────────
 
@@ -101,7 +102,7 @@ namespace StickHandle.Scripts
             if (!m_VisualTreeAsset)      throw new MissingReferenceException($"[{CLASS_NAME}] VisualTreeAsset is not set");
             if (!m_StyleSheet)           throw new MissingReferenceException($"[{CLASS_NAME}] StyleSheet is not set");
 
-            float pixelsPerUnit = m_PanelSettings.PixelsPerUnitReflection();
+            m_PixelsPerUnit = m_PanelSettings.PixelsPerUnitReflection();
 
             m_UiDocument = TelevisionController.ScreenGameobject.GetComponent<UIDocument>()
                 ?? TelevisionController.ScreenGameobject.AddComponent<UIDocument>();
@@ -109,7 +110,7 @@ namespace StickHandle.Scripts
             TelevisionController.DisableScreen();
 
             m_UiDocument.panelSettings   = m_PanelSettings;
-            m_UiDocument.worldSpaceSize  = new Vector2(pixelsPerUnit, pixelsPerUnit);
+            m_UiDocument.worldSpaceSize  = new Vector2(m_PixelsPerUnit, m_PixelsPerUnit);
             m_UiDocument.visualTreeAsset = m_VisualTreeAsset;
             m_UiDocument.rootVisualElement.styleSheets.Add(m_StyleSheet);
         }

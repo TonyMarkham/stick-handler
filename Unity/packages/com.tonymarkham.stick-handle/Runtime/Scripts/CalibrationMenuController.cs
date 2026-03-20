@@ -8,13 +8,13 @@ using UnityEngine.UIElements;
 namespace StickHandle.Scripts
 {
     [RequiredUxmlElement(typeof(Button), VIDEO_BUTTON_NAME)]
-    [RequiredUxmlElement(typeof(Button), HSL_BUTTON_NAME)]
+    [RequiredUxmlElement(typeof(Button), HSV_BUTTON_NAME)]
     [RequiredUxmlElement(typeof(Button), WORLD_BUTTON_NAME)]
     public class CalibrationMenuController : MonoBehaviour
     {
         private const string CLASS_NAME = nameof(CalibrationMenuController);
         private const string VIDEO_BUTTON_NAME = "video-btn";
-        private const string HSL_BUTTON_NAME = "hsv-btn";
+        private const string HSV_BUTTON_NAME = "hsv-btn";
         private const string WORLD_BUTTON_NAME = "world-btn";
         
         [Header("Calibration")]
@@ -34,6 +34,7 @@ namespace StickHandle.Scripts
         private StyleSheet StyleSheet => m_StyleSheet;
         
         private UIDocument m_UiDocument;
+        private float m_PixelsPerUnit;
 
         #region UI Elements
 
@@ -55,8 +56,8 @@ namespace StickHandle.Scripts
             m_VideoButton = root.Q<Button>(VIDEO_BUTTON_NAME);
             if (m_VideoButton is null) throw new InvalidOperationException($"[{CLASS_NAME}] Button [{VIDEO_BUTTON_NAME}] not found");
 
-            m_HsvButton = root.Q<Button>(HSL_BUTTON_NAME);
-            if (m_HsvButton is null) throw new InvalidOperationException($"[{CLASS_NAME}] Button [{HSL_BUTTON_NAME}] not found");
+            m_HsvButton = root.Q<Button>(HSV_BUTTON_NAME);
+            if (m_HsvButton is null) throw new InvalidOperationException($"[{CLASS_NAME}] Button [{HSV_BUTTON_NAME}] not found");
 
             m_WorldButton = root.Q<Button>(WORLD_BUTTON_NAME);
             if (m_WorldButton is null) throw new InvalidOperationException($"[{CLASS_NAME}] Button [{WORLD_BUTTON_NAME}] not found");
@@ -70,7 +71,7 @@ namespace StickHandle.Scripts
             if (!m_VisualTreeAsset)           throw new MissingReferenceException($"[{CLASS_NAME}] VisualTreeAsset is not set");
             if (!m_StyleSheet)                throw new MissingReferenceException($"[{CLASS_NAME}] m_StyleSheet is not set");
 
-            float pixelPerUnit = PanelSettings.PixelsPerUnitReflection();
+            m_PixelsPerUnit = PanelSettings.PixelsPerUnitReflection();
 
             Renderer screenRenderer = TelevisionController.ScreenGameobject.GetComponent<Renderer>();
             screenRenderer.enabled = false;
@@ -80,7 +81,7 @@ namespace StickHandle.Scripts
             m_UiDocument.panelSettings   = PanelSettings;
             m_UiDocument.visualTreeAsset = VisualTreeAsset;
             m_UiDocument.rootVisualElement.styleSheets.Add(StyleSheet);
-            m_UiDocument.worldSpaceSize  = new Vector2(pixelPerUnit, pixelPerUnit);
+            m_UiDocument.worldSpaceSize  = new Vector2(m_PixelsPerUnit, m_PixelsPerUnit);
         }
 
         private void OnEnable()
@@ -126,7 +127,7 @@ namespace StickHandle.Scripts
 
         private void HandleHsvButtonClicked()
         {
-            CalibrationModeController.ActivateHslCalibrationMenu();
+            CalibrationModeController.ActivateHsvCalibrationMenu();
         }
 
         private void HandleWorldButtonClicked()
