@@ -48,11 +48,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\HsvCalibrationMenuController.cs" />
+    <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\Attributes\RequiredUxmlElementAttribute.cs" />
     <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\WorldCalibrationData.cs" />
     <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\CenterOnLoad.cs" />
     <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\StillImagePanelController.cs" />
     <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Prefabs\TV\TelevisionController.cs" />
     <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\PresetBank.cs" />
+    <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\Attributes\RequiredRefAttribute.cs" />
     <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\PanelSettingsExtensionMethods.cs" />
     <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\SavingOverlay.cs" />
     <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\CalibrationModeController.cs" />

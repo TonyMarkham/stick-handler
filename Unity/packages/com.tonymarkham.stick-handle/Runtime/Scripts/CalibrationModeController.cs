@@ -1,8 +1,7 @@
-using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace StickHandle
+namespace StickHandle.Scripts
 {
     public class CalibrationModeController : MonoBehaviour
     {

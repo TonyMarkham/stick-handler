@@ -48,6 +48,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Editor\Scripts\ProjectSettingsEnforcer.cs" />
+    <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Editor\Scripts\UiDocumentComponentValidator.cs" />
     <None Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Editor\stick-handle-editor.asmdef" />
     <Reference Include="UnityEngine">
       <HintPath>D:\UnityEditor\6000.3.11f1\Editor\Data\Managed\UnityEngine\UnityEngine.dll</HintPath>

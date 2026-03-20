@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.IO;
 using StickHandle.Prefabs.TV;
+using StickHandle.Scripts.Attributes;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Networking;
@@ -9,6 +10,20 @@ using UnityEngine.UIElements;
 
 namespace StickHandle.Scripts
 {
+    [RequiredUxmlElement(typeof(TextField),  SERVER_NAME_ELEMENT_NAME)]
+    [RequiredUxmlElement(typeof(Button),     BACK_BUTTON_NAME)]
+    [RequiredUxmlElement(typeof(Button),     CAPTURE_BUTTON_NAME)]
+    [RequiredUxmlElement(typeof(Label),      CAPTURE_STATUS_LABEL_NAME)]
+    [RequiredUxmlElement(typeof(SliderInt),  MIN_HUE_SLIDER_NAME)]
+    [RequiredUxmlElement(typeof(SliderInt),  MAX_HUE_SLIDER_NAME)]
+    [RequiredUxmlElement(typeof(SliderInt),  MIN_SATURATION_SLIDER_NAME)]
+    [RequiredUxmlElement(typeof(SliderInt),  MAX_SATURATION_SLIDER_NAME)]
+    [RequiredUxmlElement(typeof(SliderInt),  MIN_VALUE_SLIDER_NAME)]
+    [RequiredUxmlElement(typeof(SliderInt),  MAX_VALUE_SLIDER_NAME)]
+    [RequiredUxmlElement(typeof(Label),      ORANGE_BLOB_COUNT_LABEL_NAME)]
+    [RequiredUxmlElement(typeof(Button),     ORANGE_SET_BUTTON_NAME)]
+    [RequiredUxmlElement(typeof(Label),      GREEN_BLOB_COUNT_LABEL_NAME)]
+    [RequiredUxmlElement(typeof(Button),     GREEN_SET_BUTTON_NAME)]
     public partial class HsvCalibrationMenuController : MonoBehaviour
     {
         private const string CLASS_NAME = nameof(HsvCalibrationMenuController);
@@ -43,100 +58,30 @@ namespace StickHandle.Scripts
 
         private const string PRESET_FILE_NAME = "hsv_presets.json";
 
-        [Header("Calibration")] [SerializeField]
-        private CalibrationModeController m_CalibrationModeController;
-        private CalibrationModeController CalibrationModeController
-        {
-            get
-            {
-                if (m_CalibrationModeController)
-                    return m_CalibrationModeController;
+        [Header("Calibration")]
+        [RequiredRef, SerializeField] private CalibrationModeController m_CalibrationModeController;
+        private CalibrationModeController CalibrationModeController => m_CalibrationModeController;
 
-                Debug.LogError($"[{CLASS_NAME}] CalibrationModeController is not set");
-                return m_CalibrationModeController;
-            }
-        }
+        [RequiredRef, SerializeField] private TelevisionController m_TelevisionController;
+        private TelevisionController TelevisionController => m_TelevisionController;
 
-        [SerializeField] private TelevisionController m_TelevisionController;
-        private TelevisionController TelevisionController
-        {
-            get
-            {
-                if (m_TelevisionController)
-                    return m_TelevisionController;
+        [RequiredRef, SerializeField] private PanelSettings m_PanelSettings;
+        public PanelSettings PanelSettings => m_PanelSettings;
 
-                Debug.LogError($"[{CLASS_NAME}] TelevisionController is not set");
-                return m_TelevisionController;
-            }
-        }
+        [RequiredRef, SerializeField] private VisualTreeAsset m_VisualTreeAsset;
+        private VisualTreeAsset VisualTreeAsset => m_VisualTreeAsset;
 
-        [SerializeField] private PanelSettings m_PanelSettings;
-        public PanelSettings PanelSettings
-        {
-            get
-            {
-                if (m_PanelSettings)
-                    return m_PanelSettings;
-
-                Debug.LogError($"[{CLASS_NAME}] PanelSettings is not set");
-                return m_PanelSettings;
-            }
-        }
-
-        [SerializeField] private VisualTreeAsset m_VisualTreeAsset;
-        private VisualTreeAsset VisualTreeAsset
-        {
-            get
-            {
-                if (m_VisualTreeAsset)
-                    return m_VisualTreeAsset;
-
-                Debug.LogError($"[{CLASS_NAME}] VisualTreeAsset is not set");
-                return m_VisualTreeAsset;
-            }
-        }
-
-        [SerializeField] private StyleSheet m_StyleSheet;
-        private StyleSheet StyleSheet
-        {
-            get
-            {
-                if (m_StyleSheet)
-                    return m_StyleSheet;
-
-                Debug.LogError($"[{CLASS_NAME}] m_StyleSheet is not set");
-                return m_StyleSheet;
-            }
-        }
+        [RequiredRef, SerializeField] private StyleSheet m_StyleSheet;
+        private StyleSheet StyleSheet => m_StyleSheet;
 
         private UIDocument m_UiDocument;
 
-        [Header("Common Image Panel")] [SerializeField]
-        private VisualTreeAsset m_ImagePanelUxml;
-        public VisualTreeAsset ImagePanelUxml
-        {
-            get
-            {
-                if (m_ImagePanelUxml)
-                    return m_ImagePanelUxml;
+        [Header("Common Image Panel")]
+        [RequiredRef, SerializeField] private VisualTreeAsset m_ImagePanelUxml;
+        public VisualTreeAsset ImagePanelUxml => m_ImagePanelUxml;
 
-                Debug.LogError($"[{CLASS_NAME}] ImagePanelUxml is not set");
-                return m_ImagePanelUxml;
-            }
-        }
-
-        [SerializeField] private StyleSheet m_ImagePanelStyleSheet;
-        public StyleSheet ImagePanelStyleSheet
-        {
-            get
-            {
-                if (m_ImagePanelStyleSheet)
-                    return m_ImagePanelStyleSheet;
-
-                Debug.LogError($"[{CLASS_NAME}] ImagePanelStyleSheet is not set");
-                return m_ImagePanelStyleSheet;
-            }
-        }
+        [RequiredRef, SerializeField] private StyleSheet m_ImagePanelStyleSheet;
+        public StyleSheet ImagePanelStyleSheet => m_ImagePanelStyleSheet;
 
         [Header("Original Image Panel")] [SerializeField]
         private StillImagePanelController m_OriginalPanel;
@@ -157,8 +102,6 @@ namespace StickHandle.Scripts
         private float m_AHoldTime;
         private float m_SaveCompleteCooldown;
         private const float SAVE_HOLD_DURATION = 3f;
-        private bool m_ElementsResolved;
-
         #region UI Elements
 
         private TextField m_ServerNameTextField;
@@ -205,54 +148,51 @@ namespace StickHandle.Scripts
 
         #endregion
 
-        private bool TryResolveElements()
+        private void ResolveElements()
         {
             var root = m_UiDocument.rootVisualElement;
-            bool ok = true;
 
             m_ServerNameTextField = root.Q<TextField>(SERVER_NAME_ELEMENT_NAME);
-            if (m_ServerNameTextField is null) { Debug.LogError($"[{CLASS_NAME}] TextField [{SERVER_NAME_ELEMENT_NAME}] not found"); ok = false; }
+            if (m_ServerNameTextField is null) throw new InvalidOperationException($"[{CLASS_NAME}] TextField [{SERVER_NAME_ELEMENT_NAME}] not found");
 
             m_BackButton = root.Q<Button>(BACK_BUTTON_NAME);
-            if (m_BackButton is null) { Debug.LogError($"[{CLASS_NAME}] Button [{BACK_BUTTON_NAME}] not found"); ok = false; }
+            if (m_BackButton is null) throw new InvalidOperationException($"[{CLASS_NAME}] Button [{BACK_BUTTON_NAME}] not found");
 
             m_CaptureButton = root.Q<Button>(CAPTURE_BUTTON_NAME);
-            if (m_CaptureButton is null) { Debug.LogError($"[{CLASS_NAME}] Button [{CAPTURE_BUTTON_NAME}] not found"); ok = false; }
+            if (m_CaptureButton is null) throw new InvalidOperationException($"[{CLASS_NAME}] Button [{CAPTURE_BUTTON_NAME}] not found");
 
             m_CaptureStatusLabel = root.Q<Label>(CAPTURE_STATUS_LABEL_NAME);
-            if (m_CaptureStatusLabel is null) { Debug.LogError($"[{CLASS_NAME}] Label [{CAPTURE_STATUS_LABEL_NAME}] not found"); ok = false; }
+            if (m_CaptureStatusLabel is null) throw new InvalidOperationException($"[{CLASS_NAME}] Label [{CAPTURE_STATUS_LABEL_NAME}] not found");
 
             m_MinHueSlider = root.Q<SliderInt>(MIN_HUE_SLIDER_NAME);
-            if (m_MinHueSlider is null) { Debug.LogError($"[{CLASS_NAME}] SliderInt [{MIN_HUE_SLIDER_NAME}] not found"); ok = false; }
+            if (m_MinHueSlider is null) throw new InvalidOperationException($"[{CLASS_NAME}] SliderInt [{MIN_HUE_SLIDER_NAME}] not found");
 
             m_MaxHueSlider = root.Q<SliderInt>(MAX_HUE_SLIDER_NAME);
-            if (m_MaxHueSlider is null) { Debug.LogError($"[{CLASS_NAME}] SliderInt [{MAX_HUE_SLIDER_NAME}] not found"); ok = false; }
+            if (m_MaxHueSlider is null) throw new InvalidOperationException($"[{CLASS_NAME}] SliderInt [{MAX_HUE_SLIDER_NAME}] not found");
 
             m_MinSaturationSlider = root.Q<SliderInt>(MIN_SATURATION_SLIDER_NAME);
-            if (m_MinSaturationSlider is null) { Debug.LogError($"[{CLASS_NAME}] SliderInt [{MIN_SATURATION_SLIDER_NAME}] not found"); ok = false; }
+            if (m_MinSaturationSlider is null) throw new InvalidOperationException($"[{CLASS_NAME}] SliderInt [{MIN_SATURATION_SLIDER_NAME}] not found");
 
             m_MaxSaturationSlider = root.Q<SliderInt>(MAX_SATURATION_SLIDER_NAME);
-            if (m_MaxSaturationSlider is null) { Debug.LogError($"[{CLASS_NAME}] SliderInt [{MAX_SATURATION_SLIDER_NAME}] not found"); ok = false; }
+            if (m_MaxSaturationSlider is null) throw new InvalidOperationException($"[{CLASS_NAME}] SliderInt [{MAX_SATURATION_SLIDER_NAME}] not found");
 
             m_MinValueSlider = root.Q<SliderInt>(MIN_VALUE_SLIDER_NAME);
-            if (m_MinValueSlider is null) { Debug.LogError($"[{CLASS_NAME}] SliderInt [{MIN_VALUE_SLIDER_NAME}] not found"); ok = false; }
+            if (m_MinValueSlider is null) throw new InvalidOperationException($"[{CLASS_NAME}] SliderInt [{MIN_VALUE_SLIDER_NAME}] not found");
 
             m_MaxValueSlider = root.Q<SliderInt>(MAX_VALUE_SLIDER_NAME);
-            if (m_MaxValueSlider is null) { Debug.LogError($"[{CLASS_NAME}] SliderInt [{MAX_VALUE_SLIDER_NAME}] not found"); ok = false; }
+            if (m_MaxValueSlider is null) throw new InvalidOperationException($"[{CLASS_NAME}] SliderInt [{MAX_VALUE_SLIDER_NAME}] not found");
 
             m_OrangeBlobCountLabel = root.Q<Label>(ORANGE_BLOB_COUNT_LABEL_NAME);
-            if (m_OrangeBlobCountLabel is null) { Debug.LogError($"[{CLASS_NAME}] Label [{ORANGE_BLOB_COUNT_LABEL_NAME}] not found"); ok = false; }
+            if (m_OrangeBlobCountLabel is null) throw new InvalidOperationException($"[{CLASS_NAME}] Label [{ORANGE_BLOB_COUNT_LABEL_NAME}] not found");
 
             m_GreenBlobCountLabel = root.Q<Label>(GREEN_BLOB_COUNT_LABEL_NAME);
-            if (m_GreenBlobCountLabel is null) { Debug.LogError($"[{CLASS_NAME}] Label [{GREEN_BLOB_COUNT_LABEL_NAME}] not found"); ok = false; }
+            if (m_GreenBlobCountLabel is null) throw new InvalidOperationException($"[{CLASS_NAME}] Label [{GREEN_BLOB_COUNT_LABEL_NAME}] not found");
 
             m_OrangeSetButton = root.Q<Button>(ORANGE_SET_BUTTON_NAME);
-            if (m_OrangeSetButton is null) { Debug.LogError($"[{CLASS_NAME}] Button [{ORANGE_SET_BUTTON_NAME}] not found"); ok = false; }
+            if (m_OrangeSetButton is null) throw new InvalidOperationException($"[{CLASS_NAME}] Button [{ORANGE_SET_BUTTON_NAME}] not found");
 
             m_GreenSetButton = root.Q<Button>(GREEN_SET_BUTTON_NAME);
-            if (m_GreenSetButton is null) { Debug.LogError($"[{CLASS_NAME}] Button [{GREEN_SET_BUTTON_NAME}] not found"); ok = false; }
-
-            return ok;
+            if (m_GreenSetButton is null) throw new InvalidOperationException($"[{CLASS_NAME}] Button [{GREEN_SET_BUTTON_NAME}] not found");
         }
 
         #region Coroutines
@@ -263,6 +203,14 @@ namespace StickHandle.Scripts
 
         private void Awake()
         {
+            if (!m_CalibrationModeController) throw new MissingReferenceException($"[{CLASS_NAME}] CalibrationModeController is not set");
+            if (!m_TelevisionController)      throw new MissingReferenceException($"[{CLASS_NAME}] TelevisionController is not set");
+            if (!m_PanelSettings)             throw new MissingReferenceException($"[{CLASS_NAME}] PanelSettings is not set");
+            if (!m_VisualTreeAsset)           throw new MissingReferenceException($"[{CLASS_NAME}] VisualTreeAsset is not set");
+            if (!m_StyleSheet)                throw new MissingReferenceException($"[{CLASS_NAME}] m_StyleSheet is not set");
+            if (!m_ImagePanelUxml)            throw new MissingReferenceException($"[{CLASS_NAME}] m_ImagePanelUxml is not set");
+            if (!m_ImagePanelStyleSheet)      throw new MissingReferenceException($"[{CLASS_NAME}] m_ImagePanelStyleSheet is not set");
+
             float pixelPerUnit = m_PanelSettings.PixelsPerUnitReflection();
 
             // Scale the Settings UI TV
@@ -292,11 +240,10 @@ namespace StickHandle.Scripts
 
         private void OnEnable()
         {
+            ResolveElements();
+
             if (!m_UiDocument.rootVisualElement.styleSheets.Contains(m_StyleSheet))
                 m_UiDocument.rootVisualElement.styleSheets.Add(m_StyleSheet);
-
-            m_ElementsResolved = TryResolveElements();
-            if (!m_ElementsResolved) return;
 
             if (CalibrationModeController?.WorldCalibrationData != null
                 && CalibrationModeController.WorldCalibrationData.serverHostAddress is not null)
@@ -329,24 +276,20 @@ namespace StickHandle.Scripts
 
         private void OnDisable()
         {
-            if (m_ElementsResolved)
-            {
-                CaptureButton.clicked    -= HandleCapture;
-                BackButton.clicked       -= HandleBack;
-                OrangeSetButton.clicked  -= HandleSetOrange;
-                GreenSetButton.clicked   -= HandleSetGreen;
+            CaptureButton.clicked    -= HandleCapture;
+            BackButton.clicked       -= HandleBack;
+            OrangeSetButton.clicked  -= HandleSetOrange;
+            GreenSetButton.clicked   -= HandleSetGreen;
 
-                m_MinHueSlider.UnregisterValueChangedCallback(OnSliderChanged);
-                m_MaxHueSlider.UnregisterValueChangedCallback(OnSliderChanged);
-                m_MinSaturationSlider.UnregisterValueChangedCallback(OnSliderChanged);
-                m_MaxSaturationSlider.UnregisterValueChangedCallback(OnSliderChanged);
-                m_MinValueSlider.UnregisterValueChangedCallback(OnSliderChanged);
-                m_MaxValueSlider.UnregisterValueChangedCallback(OnSliderChanged);
+            m_MinHueSlider.UnregisterValueChangedCallback(OnSliderChanged);
+            m_MaxHueSlider.UnregisterValueChangedCallback(OnSliderChanged);
+            m_MinSaturationSlider.UnregisterValueChangedCallback(OnSliderChanged);
+            m_MaxSaturationSlider.UnregisterValueChangedCallback(OnSliderChanged);
+            m_MinValueSlider.UnregisterValueChangedCallback(OnSliderChanged);
+            m_MaxValueSlider.UnregisterValueChangedCallback(OnSliderChanged);
 
-                m_OriginalPanel.OnToggleChanged -= OnDetectedToggleChanged;
-            }
+            m_OriginalPanel.OnToggleChanged -= OnDetectedToggleChanged;
 
-            m_ElementsResolved    = false;
             m_ServerNameTextField = null;
             m_BackButton          = null;
             m_CaptureButton       = null;

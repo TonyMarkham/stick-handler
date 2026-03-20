@@ -1,11 +1,15 @@
 using System;
 using StickHandle.Prefabs.TV;
+using StickHandle.Scripts.Attributes;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 
 namespace StickHandle.Scripts
 {
+    [RequiredUxmlElement(typeof(Button), VIDEO_BUTTON_NAME)]
+    [RequiredUxmlElement(typeof(Button), HSL_BUTTON_NAME)]
+    [RequiredUxmlElement(typeof(Button), WORLD_BUTTON_NAME)]
     public class CalibrationMenuController : MonoBehaviour
     {
         private const string CLASS_NAME = nameof(CalibrationMenuController);
@@ -14,90 +18,25 @@ namespace StickHandle.Scripts
         private const string WORLD_BUTTON_NAME = "world-btn";
         
         [Header("Calibration")]
-        [SerializeField]private CalibrationModeController m_CalibrationModeController;
-        private CalibrationModeController CalibrationModeController
-        {
-            get
-            {
-                if(m_CalibrationModeController)
-                    return m_CalibrationModeController;
-                
-                Debug.LogError($"[{CLASS_NAME}] CalibrationModeController is not set");
-                return m_CalibrationModeController;
-            }
-        }
-        
-        [SerializeField] private TelevisionController m_TelevisionController;
-        private TelevisionController TelevisionController
-        {
-            get
-            {
-                if(m_TelevisionController)
-                    return m_TelevisionController;
-                
-                Debug.LogError($"[{CLASS_NAME}] TelevisionController is not set");
-                return m_TelevisionController;
-            }
-        }
-        
-        [SerializeField] private PanelSettings m_PanelSettings;
-        private PanelSettings PanelSettings
-        {
-            get
-            {
-                if(m_PanelSettings)
-                    return m_PanelSettings;
-                
-                Debug.LogError($"[{CLASS_NAME}] PanelSettings is not set");
-                return m_PanelSettings;
-            }
-        }
-        
-        [SerializeField] private VisualTreeAsset m_VisualTreeAsset;
-        private VisualTreeAsset VisualTreeAsset
-        {
-            get
-            {
-                if(m_VisualTreeAsset)
-                    return m_VisualTreeAsset;
-                
-                Debug.LogError($"[{CLASS_NAME}] VisualTreeAsset is not set");
-                return m_VisualTreeAsset;
-            }
-        }
-        
-        [SerializeField] private StyleSheet m_StyleSheet;
-        private StyleSheet StyleSheet
-        {
-            get
-            {
-                if(m_StyleSheet)
-                    return m_StyleSheet;
-                
-                Debug.LogError($"[{CLASS_NAME}] m_StyleSheet is not set");
-                return m_StyleSheet;
-            }
-        }
+        [RequiredRef, SerializeField] private CalibrationModeController m_CalibrationModeController;
+        private CalibrationModeController CalibrationModeController => m_CalibrationModeController;
+
+        [RequiredRef, SerializeField] private TelevisionController m_TelevisionController;
+        private TelevisionController TelevisionController => m_TelevisionController;
+
+        [RequiredRef, SerializeField] private PanelSettings m_PanelSettings;
+        private PanelSettings PanelSettings => m_PanelSettings;
+
+        [RequiredRef, SerializeField] private VisualTreeAsset m_VisualTreeAsset;
+        private VisualTreeAsset VisualTreeAsset => m_VisualTreeAsset;
+
+        [RequiredRef, SerializeField] private StyleSheet m_StyleSheet;
+        private StyleSheet StyleSheet => m_StyleSheet;
         
         private UIDocument m_UiDocument;
-        private UIDocument UiDocument
-        {
-            get
-            {
-                if(m_UiDocument)
-                    return m_UiDocument;
-                
-                if (TelevisionController.ScreenGameobject.GetComponent<UIDocument>() is { } uiDocument)
-                {
-                    m_UiDocument = uiDocument;
-                    return m_UiDocument;
-                }
-                
-                m_UiDocument = TelevisionController.ScreenGameobject.AddComponent<UIDocument>();
-                return m_UiDocument;
-            }
-        }
-        
+
+        #region UI Elements
+
         private Button m_VideoButton;
         private Button VideoButton => m_VideoButton;
 
@@ -107,36 +46,49 @@ namespace StickHandle.Scripts
         private Button m_WorldButton;
         private Button WorldButton => m_WorldButton;
 
-        private bool TryResolveElements()
+        #endregion
+
+        private void ResolveElements()
         {
-            var root = UiDocument.rootVisualElement;
-            bool ok = true;
+            var root = m_UiDocument.rootVisualElement;
 
             m_VideoButton = root.Q<Button>(VIDEO_BUTTON_NAME);
-            if (m_VideoButton is null) { Debug.LogError($"[{CLASS_NAME}] Button [{VIDEO_BUTTON_NAME}] not found"); ok = false; }
+            if (m_VideoButton is null) throw new InvalidOperationException($"[{CLASS_NAME}] Button [{VIDEO_BUTTON_NAME}] not found");
 
             m_HsvButton = root.Q<Button>(HSL_BUTTON_NAME);
-            if (m_HsvButton is null) { Debug.LogError($"[{CLASS_NAME}] Button [{HSL_BUTTON_NAME}] not found"); ok = false; }
+            if (m_HsvButton is null) throw new InvalidOperationException($"[{CLASS_NAME}] Button [{HSL_BUTTON_NAME}] not found");
 
             m_WorldButton = root.Q<Button>(WORLD_BUTTON_NAME);
-            if (m_WorldButton is null) { Debug.LogError($"[{CLASS_NAME}] Button [{WORLD_BUTTON_NAME}] not found"); ok = false; }
-
-            return ok;
+            if (m_WorldButton is null) throw new InvalidOperationException($"[{CLASS_NAME}] Button [{WORLD_BUTTON_NAME}] not found");
         }
 
-        private void OnEnable()
+        private void Awake()
         {
+            if (!m_CalibrationModeController) throw new MissingReferenceException($"[{CLASS_NAME}] CalibrationModeController is not set");
+            if (!m_TelevisionController)      throw new MissingReferenceException($"[{CLASS_NAME}] TelevisionController is not set");
+            if (!m_PanelSettings)             throw new MissingReferenceException($"[{CLASS_NAME}] PanelSettings is not set");
+            if (!m_VisualTreeAsset)           throw new MissingReferenceException($"[{CLASS_NAME}] VisualTreeAsset is not set");
+            if (!m_StyleSheet)                throw new MissingReferenceException($"[{CLASS_NAME}] m_StyleSheet is not set");
+
             float pixelPerUnit = PanelSettings.PixelsPerUnitReflection();
 
             Renderer screenRenderer = TelevisionController.ScreenGameobject.GetComponent<Renderer>();
             screenRenderer.enabled = false;
 
-            UiDocument.panelSettings = PanelSettings;
-            UiDocument.visualTreeAsset = VisualTreeAsset;
-            UiDocument.rootVisualElement.styleSheets.Add(StyleSheet);
-            UiDocument.worldSpaceSize = new Vector2(pixelPerUnit, pixelPerUnit);
+            m_UiDocument = TelevisionController.ScreenGameobject.GetComponent<UIDocument>()
+                ?? TelevisionController.ScreenGameobject.AddComponent<UIDocument>();
+            m_UiDocument.panelSettings   = PanelSettings;
+            m_UiDocument.visualTreeAsset = VisualTreeAsset;
+            m_UiDocument.rootVisualElement.styleSheets.Add(StyleSheet);
+            m_UiDocument.worldSpaceSize  = new Vector2(pixelPerUnit, pixelPerUnit);
+        }
 
-            if (!TryResolveElements()) return;
+        private void OnEnable()
+        {
+            ResolveElements();
+
+            if (!m_UiDocument.rootVisualElement.styleSheets.Contains(m_StyleSheet))
+                m_UiDocument.rootVisualElement.styleSheets.Add(m_StyleSheet);
 
             VideoButton.clicked += HandleVideoButtonClicked;
             HsvButton.clicked   += HandleHsvButtonClicked;
@@ -147,13 +99,12 @@ namespace StickHandle.Scripts
 
         private void OnDisable()
         {
-            if (m_VideoButton != null) m_VideoButton.clicked -= HandleVideoButtonClicked;
-            if (m_HsvButton != null)   m_HsvButton.clicked   -= HandleHsvButtonClicked;
-            if (m_WorldButton != null) m_WorldButton.clicked  -= HandleWorldButtonClicked;
+            m_VideoButton.clicked -= HandleVideoButtonClicked;
+            m_HsvButton.clicked   -= HandleHsvButtonClicked;
+            m_WorldButton.clicked -= HandleWorldButtonClicked;
 
             TelevisionController.Switch(false);
 
-            m_UiDocument  = null;
             m_VideoButton = null;
             m_HsvButton   = null;
             m_WorldButton = null;
