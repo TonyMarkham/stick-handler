@@ -40,6 +40,9 @@ namespace StickHandle.Scripts
         private const string MIN_VALUE_SLIDER_NAME = "v-min";
         private const string MAX_VALUE_SLIDER_NAME = "v-max";
 
+        private const string BANK_ORANGE = "orange";
+        private const string BANK_GREEN  = "green";
+
         private const string ORANGE_PRESET_01_BUTTON_NAME = "orange-preset-1";
         private const string ORANGE_PRESET_02_BUTTON_NAME = "orange-preset-2";
         private const string ORANGE_PRESET_03_BUTTON_NAME = "orange-preset-3";
@@ -114,7 +117,9 @@ namespace StickHandle.Scripts
         private Button m_HoveredBtn;
         private float m_AHoldTime;
         private float m_SaveCompleteCooldown;
-        private const float SAVE_HOLD_DURATION = 3f;
+        private const float SAVE_HOLD_DURATION        = 3f;
+        private const float HSV_HUE_MAX              = HsvPreset.HUE_MAX;
+        private const float HSV_SATURATION_VALUE_MAX = HsvPreset.SATURATION_VALUE_MAX;
 
         #region UI Elements
 
@@ -410,13 +415,17 @@ namespace StickHandle.Scripts
             m_HoveredBtn           = null;
             m_AHoldTime            = 0;
             m_SaveCompleteCooldown = 0;
+
+            m_HasCaptured = false;
+            m_UseDetected = false;
+            m_ActiveBank  = null;
         }
 
         // ── Helpers ──────────────────────────────────────────────────────────────
 
         private bool m_HasCaptured;
         private bool m_UseDetected;
-        private string m_ActiveBank; // "orange" or "green" — last bank targeted by Set
+        private string m_ActiveBank; // BANK_ORANGE or BANK_GREEN — last bank targeted by Set
 
         private string Host()
         {
@@ -547,7 +556,7 @@ namespace StickHandle.Scripts
 
         private void UpdateBlobCount(string bank, int count)
         {
-            if (bank == "orange")
+            if (bank == BANK_ORANGE)
             {
                 bool valid = count == 4;
                 if (OrangeBlobCountLabel != null)
@@ -561,7 +570,7 @@ namespace StickHandle.Scripts
                 if (CalibrationModeController.WorldCalibrationData != null)
                     CalibrationModeController.WorldCalibrationData.orangeValid = valid;
             }
-            else if (bank == "green")
+            else if (bank == BANK_GREEN)
             {
                 bool valid = count == 1;
                 if (GreenBlobCountLabel != null)
@@ -803,14 +812,14 @@ namespace StickHandle.Scripts
 
         private static Color MedianHsvColor(HsvPreset p) =>
             Color.HSVToRGB(
-                ((p.hMin + p.hMax) / 2f) / 179f,
-                ((p.sMin + p.sMax) / 2f) / 255f,
-                ((p.vMin + p.vMax) / 2f) / 255f);
+                ((p.hMin + p.hMax) / 2f) / HSV_HUE_MAX,
+                ((p.sMin + p.sMax) / 2f) / HSV_SATURATION_VALUE_MAX,
+                ((p.vMin + p.vMax) / 2f) / HSV_SATURATION_VALUE_MAX);
 
         // ── Set buttons ──────────────────────────────────────────────────────────
 
-        private void HandleSetOrange() { m_ActiveBank = "orange"; StartCoroutine(PutHsvFilter("orange")); }
-        private void HandleSetGreen()  { m_ActiveBank = "green";  StartCoroutine(PutHsvFilter("green")); }
+        private void HandleSetOrange() { m_ActiveBank = BANK_ORANGE; StartCoroutine(PutHsvFilter(BANK_ORANGE)); }
+        private void HandleSetGreen()  { m_ActiveBank = BANK_GREEN;  StartCoroutine(PutHsvFilter(BANK_GREEN)); }
 
         private IEnumerator PutHsvFilter(string color)
         {
