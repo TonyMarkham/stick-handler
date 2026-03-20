@@ -1,87 +1,56 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace StickHandle.Scripts
 {
-    public partial class HsvCalibrationMenuController
+    [UxmlElement]
+    public partial class SavingOverlay : VisualElement
     {
-        private class SavingOverlay : VisualElement
+        private const string USS_CLASS_NAME        = "saving-overlay";
+        private const float  LINE_WIDTH            = 3f;
+        private const float  RADIUS_INSET          = 3f;
+        private const float  BACKGROUND_ALPHA      = 0.25f;
+        private const float  ARC_BACKGROUND_START  = 0f;
+        private const float  ARC_START_ANGLE       = -90f;
+        private const float  FULL_CIRCLE_DEGREES   = 360f;
+
+        private static readonly Color BACKGROUND_RING_COLOR = new Color(1f, 1f, 1f, BACKGROUND_ALPHA);
+
+        private float _progress;
+
+        public float Progress
         {
-            private float _progress;
-            private readonly Label _label;
+            get => _progress;
+            set { _progress = Mathf.Clamp01(value); MarkDirtyRepaint(); }
+        }
 
-            public float Progress
-            {
-                get => _progress;
-                set
-                {
-                    _progress = Mathf.Clamp01(value);
-                    MarkDirtyRepaint();
-                }
-            }
+        public SavingOverlay()
+        {
+            AddToClassList(USS_CLASS_NAME);
+            pickingMode = PickingMode.Ignore;
+            generateVisualContent += Draw;
+            visible = false;
+        }
 
-            public SavingOverlay()
-            {
-                style.position = Position.Absolute;
-                style.left = 0;
-                style.right = 0;
-                style.top = 0;
-                style.bottom = 0;
-                style.alignItems = Align.Center;
-                style.justifyContent = Justify.Center;
-                pickingMode = PickingMode.Ignore;
+        public void Show() { visible = true; Progress = 0; }
+        public void Hide() { visible = false; Progress = 0; }
 
-                _label = new Label("SAVING") { pickingMode = PickingMode.Ignore };
-                _label.style.color = Color.white;
-                _label.style.fontSize = 7;
-                _label.style.unityFontStyleAndWeight = FontStyle.Bold;
-                _label.style.position = Position.Absolute;
-                Add(_label);
-
-                generateVisualContent += Draw;
-                visible = false;
-            }
-
-            public event System.Action OnShow;
-            public event System.Action OnHide;
-
-            public void Show()
-            {
-                visible = true;
-                Progress = 0;
-                OnShow?.Invoke();
-            }
-
-            public void Hide()
-            {
-                visible = false;
-                Progress = 0;
-                OnHide?.Invoke();
-            }
-
-            private void Draw(MeshGenerationContext ctx)
-            {
-                if (_progress <= 0) return;
-
-                float cx = layout.width / 2f;
-                float cy = layout.height / 2f;
-                float radius = Mathf.Min(cx, cy) - 3f;
-
-                var p2d = ctx.painter2D;
-                p2d.lineWidth = 3f;
-
-                // Faint background ring
-                p2d.strokeColor = new Color(1f, 1f, 1f, 0.25f);
-                p2d.BeginPath();
-                p2d.Arc(new Vector2(cx, cy), radius, 0f, 360f, ArcDirection.Clockwise);
-                p2d.Stroke();
-
-                // Filling arc, clockwise from top
-                p2d.strokeColor = Color.white;
-                p2d.BeginPath();
-                p2d.Arc(new Vector2(cx, cy), radius, -90f, -90f + _progress * 360f, ArcDirection.Clockwise);
-                p2d.Stroke();
-            }
+        private void Draw(MeshGenerationContext ctx)
+        {
+            if (_progress <= 0) return;
+            float cx     = layout.width  / 2f;
+            float cy     = layout.height / 2f;
+            float radius = Mathf.Min(cx, cy) - RADIUS_INSET;
+            var   p2d    = ctx.painter2D;
+            p2d.lineWidth = LINE_WIDTH;
+            p2d.strokeColor = BACKGROUND_RING_COLOR;
+            p2d.BeginPath();
+            p2d.Arc(new Vector2(cx, cy), radius, ARC_BACKGROUND_START, FULL_CIRCLE_DEGREES, ArcDirection.Clockwise);
+            p2d.Stroke();
+            p2d.strokeColor = Color.white;
+            p2d.BeginPath();
+            p2d.Arc(new Vector2(cx, cy), radius, ARC_START_ANGLE, ARC_START_ANGLE + _progress * FULL_CIRCLE_DEGREES, ArcDirection.Clockwise);
+            p2d.Stroke();
         }
     }
 }

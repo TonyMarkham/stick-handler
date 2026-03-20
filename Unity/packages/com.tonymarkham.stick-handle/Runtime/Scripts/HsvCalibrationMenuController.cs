@@ -24,7 +24,7 @@ namespace StickHandle.Scripts
     [RequiredUxmlElement(typeof(Button),     ORANGE_SET_BUTTON_NAME)]
     [RequiredUxmlElement(typeof(Label),      GREEN_BLOB_COUNT_LABEL_NAME)]
     [RequiredUxmlElement(typeof(Button),     GREEN_SET_BUTTON_NAME)]
-    public partial class HsvCalibrationMenuController : MonoBehaviour
+    public class HsvCalibrationMenuController : MonoBehaviour
     {
         private const string CLASS_NAME = nameof(HsvCalibrationMenuController);
 
@@ -56,7 +56,19 @@ namespace StickHandle.Scripts
         private const string GREEN_SET_BUTTON_NAME = "green-set-btn";
         private const string GREEN_BLOB_COUNT_LABEL_NAME = "green-blob-count-label";
 
-        private const string PRESET_FILE_NAME = "hsv_presets.json";
+        private const string ORANGE_PRESET_01_OVERLAY_NAME = "orange-preset-1-overlay";
+        private const string ORANGE_PRESET_02_OVERLAY_NAME = "orange-preset-2-overlay";
+        private const string ORANGE_PRESET_03_OVERLAY_NAME = "orange-preset-3-overlay";
+        private const string ORANGE_PRESET_04_OVERLAY_NAME = "orange-preset-4-overlay";
+        private const string ORANGE_PRESET_05_OVERLAY_NAME = "orange-preset-5-overlay";
+        private const string GREEN_PRESET_01_OVERLAY_NAME  = "green-preset-1-overlay";
+        private const string GREEN_PRESET_02_OVERLAY_NAME  = "green-preset-2-overlay";
+        private const string GREEN_PRESET_03_OVERLAY_NAME  = "green-preset-3-overlay";
+        private const string GREEN_PRESET_04_OVERLAY_NAME  = "green-preset-4-overlay";
+        private const string GREEN_PRESET_05_OVERLAY_NAME  = "green-preset-5-overlay";
+
+        private const string PRESET_FILE_NAME  = "hsv_presets.json";
+        private const string USS_PRESET_SAVING = "preset-saving";
 
         [Header("Calibration")]
         [RequiredRef, SerializeField] private CalibrationModeController m_CalibrationModeController;
@@ -102,6 +114,7 @@ namespace StickHandle.Scripts
         private float m_AHoldTime;
         private float m_SaveCompleteCooldown;
         private const float SAVE_HOLD_DURATION = 3f;
+
         #region UI Elements
 
         private TextField m_ServerNameTextField;
@@ -145,6 +158,14 @@ namespace StickHandle.Scripts
 
         private Button m_GreenSetButton;
         private Button GreenSetButton => m_GreenSetButton;
+
+        private Button m_OrangePreset1, m_OrangePreset2, m_OrangePreset3, m_OrangePreset4, m_OrangePreset5;
+        private Button m_GreenPreset1,  m_GreenPreset2,  m_GreenPreset3,  m_GreenPreset4,  m_GreenPreset5;
+
+        private SavingOverlay m_OrangePreset1Overlay, m_OrangePreset2Overlay, m_OrangePreset3Overlay,
+                              m_OrangePreset4Overlay, m_OrangePreset5Overlay;
+        private SavingOverlay m_GreenPreset1Overlay,  m_GreenPreset2Overlay,  m_GreenPreset3Overlay,
+                              m_GreenPreset4Overlay,  m_GreenPreset5Overlay;
 
         #endregion
 
@@ -193,6 +214,56 @@ namespace StickHandle.Scripts
 
             m_GreenSetButton = root.Q<Button>(GREEN_SET_BUTTON_NAME);
             if (m_GreenSetButton is null) throw new InvalidOperationException($"[{CLASS_NAME}] Button [{GREEN_SET_BUTTON_NAME}] not found");
+
+            m_OrangePreset1 = root.Q<Button>(ORANGE_PRESET_01_BUTTON_NAME);
+            if (m_OrangePreset1 is null) throw new InvalidOperationException($"[{CLASS_NAME}] Button [{ORANGE_PRESET_01_BUTTON_NAME}] not found");
+            m_OrangePreset1Overlay = root.Q<SavingOverlay>(ORANGE_PRESET_01_OVERLAY_NAME);
+            if (m_OrangePreset1Overlay is null) throw new InvalidOperationException($"[{CLASS_NAME}] SavingOverlay [{ORANGE_PRESET_01_OVERLAY_NAME}] not found");
+
+            m_OrangePreset2 = root.Q<Button>(ORANGE_PRESET_02_BUTTON_NAME);
+            if (m_OrangePreset2 is null) throw new InvalidOperationException($"[{CLASS_NAME}] Button [{ORANGE_PRESET_02_BUTTON_NAME}] not found");
+            m_OrangePreset2Overlay = root.Q<SavingOverlay>(ORANGE_PRESET_02_OVERLAY_NAME);
+            if (m_OrangePreset2Overlay is null) throw new InvalidOperationException($"[{CLASS_NAME}] SavingOverlay [{ORANGE_PRESET_02_OVERLAY_NAME}] not found");
+
+            m_OrangePreset3 = root.Q<Button>(ORANGE_PRESET_03_BUTTON_NAME);
+            if (m_OrangePreset3 is null) throw new InvalidOperationException($"[{CLASS_NAME}] Button [{ORANGE_PRESET_03_BUTTON_NAME}] not found");
+            m_OrangePreset3Overlay = root.Q<SavingOverlay>(ORANGE_PRESET_03_OVERLAY_NAME);
+            if (m_OrangePreset3Overlay is null) throw new InvalidOperationException($"[{CLASS_NAME}] SavingOverlay [{ORANGE_PRESET_03_OVERLAY_NAME}] not found");
+
+            m_OrangePreset4 = root.Q<Button>(ORANGE_PRESET_04_BUTTON_NAME);
+            if (m_OrangePreset4 is null) throw new InvalidOperationException($"[{CLASS_NAME}] Button [{ORANGE_PRESET_04_BUTTON_NAME}] not found");
+            m_OrangePreset4Overlay = root.Q<SavingOverlay>(ORANGE_PRESET_04_OVERLAY_NAME);
+            if (m_OrangePreset4Overlay is null) throw new InvalidOperationException($"[{CLASS_NAME}] SavingOverlay [{ORANGE_PRESET_04_OVERLAY_NAME}] not found");
+
+            m_OrangePreset5 = root.Q<Button>(ORANGE_PRESET_05_BUTTON_NAME);
+            if (m_OrangePreset5 is null) throw new InvalidOperationException($"[{CLASS_NAME}] Button [{ORANGE_PRESET_05_BUTTON_NAME}] not found");
+            m_OrangePreset5Overlay = root.Q<SavingOverlay>(ORANGE_PRESET_05_OVERLAY_NAME);
+            if (m_OrangePreset5Overlay is null) throw new InvalidOperationException($"[{CLASS_NAME}] SavingOverlay [{ORANGE_PRESET_05_OVERLAY_NAME}] not found");
+
+            m_GreenPreset1 = root.Q<Button>(GREEN_PRESET_01_BUTTON_NAME);
+            if (m_GreenPreset1 is null) throw new InvalidOperationException($"[{CLASS_NAME}] Button [{GREEN_PRESET_01_BUTTON_NAME}] not found");
+            m_GreenPreset1Overlay = root.Q<SavingOverlay>(GREEN_PRESET_01_OVERLAY_NAME);
+            if (m_GreenPreset1Overlay is null) throw new InvalidOperationException($"[{CLASS_NAME}] SavingOverlay [{GREEN_PRESET_01_OVERLAY_NAME}] not found");
+
+            m_GreenPreset2 = root.Q<Button>(GREEN_PRESET_02_BUTTON_NAME);
+            if (m_GreenPreset2 is null) throw new InvalidOperationException($"[{CLASS_NAME}] Button [{GREEN_PRESET_02_BUTTON_NAME}] not found");
+            m_GreenPreset2Overlay = root.Q<SavingOverlay>(GREEN_PRESET_02_OVERLAY_NAME);
+            if (m_GreenPreset2Overlay is null) throw new InvalidOperationException($"[{CLASS_NAME}] SavingOverlay [{GREEN_PRESET_02_OVERLAY_NAME}] not found");
+
+            m_GreenPreset3 = root.Q<Button>(GREEN_PRESET_03_BUTTON_NAME);
+            if (m_GreenPreset3 is null) throw new InvalidOperationException($"[{CLASS_NAME}] Button [{GREEN_PRESET_03_BUTTON_NAME}] not found");
+            m_GreenPreset3Overlay = root.Q<SavingOverlay>(GREEN_PRESET_03_OVERLAY_NAME);
+            if (m_GreenPreset3Overlay is null) throw new InvalidOperationException($"[{CLASS_NAME}] SavingOverlay [{GREEN_PRESET_03_OVERLAY_NAME}] not found");
+
+            m_GreenPreset4 = root.Q<Button>(GREEN_PRESET_04_BUTTON_NAME);
+            if (m_GreenPreset4 is null) throw new InvalidOperationException($"[{CLASS_NAME}] Button [{GREEN_PRESET_04_BUTTON_NAME}] not found");
+            m_GreenPreset4Overlay = root.Q<SavingOverlay>(GREEN_PRESET_04_OVERLAY_NAME);
+            if (m_GreenPreset4Overlay is null) throw new InvalidOperationException($"[{CLASS_NAME}] SavingOverlay [{GREEN_PRESET_04_OVERLAY_NAME}] not found");
+
+            m_GreenPreset5 = root.Q<Button>(GREEN_PRESET_05_BUTTON_NAME);
+            if (m_GreenPreset5 is null) throw new InvalidOperationException($"[{CLASS_NAME}] Button [{GREEN_PRESET_05_BUTTON_NAME}] not found");
+            m_GreenPreset5Overlay = root.Q<SavingOverlay>(GREEN_PRESET_05_OVERLAY_NAME);
+            if (m_GreenPreset5Overlay is null) throw new InvalidOperationException($"[{CLASS_NAME}] SavingOverlay [{GREEN_PRESET_05_OVERLAY_NAME}] not found");
         }
 
         #region Coroutines
@@ -269,13 +340,18 @@ namespace StickHandle.Scripts
 
             m_PresetConfig = LoadPresets();
 
-            var root = m_UiDocument.rootVisualElement;
-            WirePresetBank(root, "orange", 0);
-            WirePresetBank(root, "green",  1);
+            if (m_PresetConfig?.banks?.Length > 0)
+                WirePresetBank(m_PresetConfig.banks[0],
+                    m_OrangePreset1, m_OrangePreset2, m_OrangePreset3, m_OrangePreset4, m_OrangePreset5);
+            if (m_PresetConfig?.banks?.Length > 1)
+                WirePresetBank(m_PresetConfig.banks[1],
+                    m_GreenPreset1, m_GreenPreset2, m_GreenPreset3, m_GreenPreset4, m_GreenPreset5);
         }
 
         private void OnDisable()
         {
+            UnwirePresets();
+
             CaptureButton.clicked    -= HandleCapture;
             BackButton.clicked       -= HandleBack;
             OrangeSetButton.clicked  -= HandleSetOrange;
@@ -304,6 +380,17 @@ namespace StickHandle.Scripts
             m_GreenBlobCountLabel  = null;
             m_OrangeSetButton      = null;
             m_GreenSetButton       = null;
+
+            m_OrangePreset1 = null; m_OrangePreset2 = null; m_OrangePreset3 = null;
+            m_OrangePreset4 = null; m_OrangePreset5 = null;
+            m_GreenPreset1  = null; m_GreenPreset2  = null; m_GreenPreset3  = null;
+            m_GreenPreset4  = null; m_GreenPreset5  = null;
+            m_OrangePreset1Overlay = null; m_OrangePreset2Overlay = null;
+            m_OrangePreset3Overlay = null; m_OrangePreset4Overlay = null;
+            m_OrangePreset5Overlay = null;
+            m_GreenPreset1Overlay  = null; m_GreenPreset2Overlay  = null;
+            m_GreenPreset3Overlay  = null; m_GreenPreset4Overlay  = null;
+            m_GreenPreset5Overlay  = null;
 
             TelevisionController.Switch(false);
 
@@ -520,7 +607,10 @@ namespace StickHandle.Scripts
             {
                 m_SaveCompleteCooldown -= Time.deltaTime;
                 if (m_SaveCompleteCooldown <= 0)
+                {
                     m_HoveredOverlay?.Hide();
+                    m_HoveredBtn?.RemoveFromClassList(USS_PRESET_SAVING);
+                }
                 return;
             }
 
@@ -532,7 +622,11 @@ namespace StickHandle.Scripts
 
             if (m_InputActionReference.action.IsPressed())
             {
-                if (!m_HoveredOverlay.visible) m_HoveredOverlay.Show();
+                if (!m_HoveredOverlay.visible)
+                {
+                    m_HoveredBtn.AddToClassList(USS_PRESET_SAVING);
+                    m_HoveredOverlay.Show();
+                }
                 m_AHoldTime += Time.deltaTime;
                 m_HoveredOverlay.Progress = Mathf.Clamp01(m_AHoldTime / SAVE_HOLD_DURATION);
 
@@ -556,6 +650,7 @@ namespace StickHandle.Scripts
             {
                 m_AHoldTime = 0;
                 m_HoveredOverlay.Hide();
+                m_HoveredBtn.RemoveFromClassList(USS_PRESET_SAVING);
             }
         }
 
@@ -596,56 +691,80 @@ namespace StickHandle.Scripts
             return JsonUtility.FromJson<PresetConfig>(json);
         }
 
-        private void WirePresetBank(VisualElement root, string bankKey, int bankIndex)
+        private void WirePresetBank(PresetBank bank,
+            Button b1, Button b2, Button b3, Button b4, Button b5)
         {
-            if (m_PresetConfig?.banks == null || bankIndex >= m_PresetConfig.banks.Length) return;
+            WirePresetButton(b1, bank.presets.Length > 0 ? bank.presets[0] : null);
+            WirePresetButton(b2, bank.presets.Length > 1 ? bank.presets[1] : null);
+            WirePresetButton(b3, bank.presets.Length > 2 ? bank.presets[2] : null);
+            WirePresetButton(b4, bank.presets.Length > 3 ? bank.presets[3] : null);
+            WirePresetButton(b5, bank.presets.Length > 4 ? bank.presets[4] : null);
+        }
 
-            PresetBank bank = m_PresetConfig.banks[bankIndex];
+        private void WirePresetButton(Button btn, HsvPreset preset)
+        {
+            if (btn == null || preset == null) return;
+            btn.userData = preset;
+            btn.style.backgroundColor = new StyleColor(MedianHsvColor(preset));
+            btn.RegisterCallback<PointerEnterEvent>(HandlePresetEnter);
+            btn.RegisterCallback<PointerLeaveEvent>(HandlePresetLeave);
+            btn.RegisterCallback<PointerUpEvent>(HandlePresetUp);
+        }
 
-            for (int i = 0; i < 5; i++)
-            {
-                int capturedIndex = i;
-                var btn = root.Q<Button>($"{bankKey}-preset-{i + 1}");
-                if (btn == null)
-                {
-                    Debug.LogWarning($"[{CLASS_NAME}] Button '{bankKey}-preset-{i + 1}' not found in UXML");
-                    continue;
-                }
+        private void UnwirePresets()
+        {
+            UnwirePresetButton(m_OrangePreset1); UnwirePresetButton(m_OrangePreset2);
+            UnwirePresetButton(m_OrangePreset3); UnwirePresetButton(m_OrangePreset4);
+            UnwirePresetButton(m_OrangePreset5);
+            UnwirePresetButton(m_GreenPreset1);  UnwirePresetButton(m_GreenPreset2);
+            UnwirePresetButton(m_GreenPreset3);  UnwirePresetButton(m_GreenPreset4);
+            UnwirePresetButton(m_GreenPreset5);
+        }
 
-                if (capturedIndex >= bank.presets.Length)
-                {
-                    Debug.LogWarning($"[{CLASS_NAME}] No preset data for '{bankKey}' index {capturedIndex}");
-                    continue;
-                }
+        private void UnwirePresetButton(Button btn)
+        {
+            if (btn == null) return;
+            btn.UnregisterCallback<PointerEnterEvent>(HandlePresetEnter);
+            btn.UnregisterCallback<PointerLeaveEvent>(HandlePresetLeave);
+            btn.UnregisterCallback<PointerUpEvent>(HandlePresetUp);
+        }
 
-                HsvPreset preset = bank.presets[capturedIndex];
-                btn.style.backgroundColor = new StyleColor(MedianHsvColor(preset));
+        private SavingOverlay OverlayForButton(Button btn)
+        {
+            if (btn == m_OrangePreset1) return m_OrangePreset1Overlay;
+            if (btn == m_OrangePreset2) return m_OrangePreset2Overlay;
+            if (btn == m_OrangePreset3) return m_OrangePreset3Overlay;
+            if (btn == m_OrangePreset4) return m_OrangePreset4Overlay;
+            if (btn == m_OrangePreset5) return m_OrangePreset5Overlay;
+            if (btn == m_GreenPreset1)  return m_GreenPreset1Overlay;
+            if (btn == m_GreenPreset2)  return m_GreenPreset2Overlay;
+            if (btn == m_GreenPreset3)  return m_GreenPreset3Overlay;
+            if (btn == m_GreenPreset4)  return m_GreenPreset4Overlay;
+            if (btn == m_GreenPreset5)  return m_GreenPreset5Overlay;
+            return null;
+        }
 
-                var overlay = new SavingOverlay();
-                btn.Add(overlay);
+        private void HandlePresetEnter(PointerEnterEvent evt)
+        {
+            var btn = (Button)evt.target;
+            m_HoveredPreset  = (HsvPreset)btn.userData;
+            m_HoveredOverlay = OverlayForButton(btn);
+            m_HoveredBtn     = btn;
+        }
 
-                string originalText = btn.text;
-                overlay.OnShow += () => btn.text = "";
-                overlay.OnHide += () => btn.text = originalText;
+        private void HandlePresetLeave(PointerLeaveEvent evt)
+        {
+            if (m_HoveredPreset != (HsvPreset)((Button)evt.target).userData) return;
+            m_HoveredOverlay.Hide();
+            m_HoveredBtn.RemoveFromClassList(USS_PRESET_SAVING);
+            m_HoveredPreset  = null;
+            m_HoveredOverlay = null;
+            m_HoveredBtn     = null;
+        }
 
-                btn.RegisterCallback<PointerEnterEvent>(_ =>
-                {
-                    m_HoveredPreset = preset;
-                    m_HoveredOverlay = overlay;
-                    m_HoveredBtn = btn;
-                });
-
-                btn.RegisterCallback<PointerLeaveEvent>(_ =>
-                {
-                    if (m_HoveredPreset != preset) return;
-                    m_HoveredPreset = null;
-                    m_HoveredOverlay = null;
-                    m_HoveredBtn = null;
-                    overlay.Hide();
-                });
-
-                btn.RegisterCallback<PointerUpEvent>(_ => ApplyPreset(preset));
-            }
+        private void HandlePresetUp(PointerUpEvent evt)
+        {
+            ApplyPreset((HsvPreset)((Button)evt.target).userData);
         }
 
         private void SavePresets()

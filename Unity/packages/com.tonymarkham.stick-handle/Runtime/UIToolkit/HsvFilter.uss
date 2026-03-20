@@ -177,3 +177,23 @@
 .slider #unity-tracker {
     background-color: rgba(255, 255, 255, 0.2);
 }
+
+/* ── Saving Overlay ──────────────────────────────── */
+
+.saving-overlay {
+    position: absolute;
+    left: 0; right: 0; top: 0; bottom: 0;
+    align-items: center;
+    justify-content: center;
+}
+
+.saving-label {
+    position: absolute;
+    color: white;
+    font-size: 7px;
+    -unity-font-style: bold;
+}
+
+.preset-saving > .unity-text-element {
+    visibility: hidden;
+}

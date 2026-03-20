@@ -1,4 +1,4 @@
-<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:sh="StickHandle.Scripts" editor-extension-mode="False">
     <ui:VisualElement name="root" class="hsv-panel">
 
         <!-- Header -->
@@ -31,11 +31,31 @@
             <ui:VisualElement name="orange-bank" class="preset-bank">
                 <ui:Label text="Orange" class="bank-label orange-label" />
                 <ui:VisualElement class="preset-row">
-                    <ui:Button name="orange-preset-1" text="P1" class="bs preset-btn" />
-                    <ui:Button name="orange-preset-2" text="P2" class="bs preset-btn" />
-                    <ui:Button name="orange-preset-3" text="P3" class="bs preset-btn" />
-                    <ui:Button name="orange-preset-4" text="P4" class="bs preset-btn" />
-                    <ui:Button name="orange-preset-5" text="P5" class="bs preset-btn" />
+                    <ui:Button name="orange-preset-1" text="P1" class="bs preset-btn">
+                        <sh:SavingOverlay name="orange-preset-1-overlay">
+                            <ui:Label name="orange-preset-1-label" text="SAVING" class="saving-label" />
+                        </sh:SavingOverlay>
+                    </ui:Button>
+                    <ui:Button name="orange-preset-2" text="P2" class="bs preset-btn">
+                        <sh:SavingOverlay name="orange-preset-2-overlay">
+                            <ui:Label name="orange-preset-2-label" text="SAVING" class="saving-label" />
+                        </sh:SavingOverlay>
+                    </ui:Button>
+                    <ui:Button name="orange-preset-3" text="P3" class="bs preset-btn">
+                        <sh:SavingOverlay name="orange-preset-3-overlay">
+                            <ui:Label name="orange-preset-3-label" text="SAVING" class="saving-label" />
+                        </sh:SavingOverlay>
+                    </ui:Button>
+                    <ui:Button name="orange-preset-4" text="P4" class="bs preset-btn">
+                        <sh:SavingOverlay name="orange-preset-4-overlay">
+                            <ui:Label name="orange-preset-4-label" text="SAVING" class="saving-label" />
+                        </sh:SavingOverlay>
+                    </ui:Button>
+                    <ui:Button name="orange-preset-5" text="P5" class="bs preset-btn">
+                        <sh:SavingOverlay name="orange-preset-5-overlay">
+                            <ui:Label name="orange-preset-5-label" text="SAVING" class="saving-label" />
+                        </sh:SavingOverlay>
+                    </ui:Button>
                     <ui:Button name="orange-set-btn" text="Set" class="bs set-btn" />
                 </ui:VisualElement>
                 <ui:Label name="orange-blob-count-label" text="" class="blob-count-label" />
@@ -45,11 +65,31 @@
             <ui:VisualElement name="green-bank" class="preset-bank">
                 <ui:Label text="Green" class="bank-label green-label" />
                 <ui:VisualElement class="preset-row">
-                    <ui:Button name="green-preset-1" text="P1" class="bs preset-btn" />
-                    <ui:Button name="green-preset-2" text="P2" class="bs preset-btn" />
-                    <ui:Button name="green-preset-3" text="P3" class="bs preset-btn" />
-                    <ui:Button name="green-preset-4" text="P4" class="bs preset-btn" />
-                    <ui:Button name="green-preset-5" text="P5" class="bs preset-btn" />
+                    <ui:Button name="green-preset-1" text="P1" class="bs preset-btn">
+                        <sh:SavingOverlay name="green-preset-1-overlay">
+                            <ui:Label name="green-preset-1-label" text="SAVING" class="saving-label" />
+                        </sh:SavingOverlay>
+                    </ui:Button>
+                    <ui:Button name="green-preset-2" text="P2" class="bs preset-btn">
+                        <sh:SavingOverlay name="green-preset-2-overlay">
+                            <ui:Label name="green-preset-2-label" text="SAVING" class="saving-label" />
+                        </sh:SavingOverlay>
+                    </ui:Button>
+                    <ui:Button name="green-preset-3" text="P3" class="bs preset-btn">
+                        <sh:SavingOverlay name="green-preset-3-overlay">
+                            <ui:Label name="green-preset-3-label" text="SAVING" class="saving-label" />
+                        </sh:SavingOverlay>
+                    </ui:Button>
+                    <ui:Button name="green-preset-4" text="P4" class="bs preset-btn">
+                        <sh:SavingOverlay name="green-preset-4-overlay">
+                            <ui:Label name="green-preset-4-label" text="SAVING" class="saving-label" />
+                        </sh:SavingOverlay>
+                    </ui:Button>
+                    <ui:Button name="green-preset-5" text="P5" class="bs preset-btn">
+                        <sh:SavingOverlay name="green-preset-5-overlay">
+                            <ui:Label name="green-preset-5-label" text="SAVING" class="saving-label" />
+                        </sh:SavingOverlay>
+                    </ui:Button>
                     <ui:Button name="green-set-btn" text="Set" class="bs set-btn" />
                 </ui:VisualElement>
                 <ui:Label name="green-blob-count-label" text="" class="blob-count-label" />
