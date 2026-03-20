@@ -8,6 +8,7 @@ namespace StickHandle.Scripts
 {
     public class CalibrationMenuController : MonoBehaviour
     {
+        private const string CLASS_NAME = nameof(CalibrationMenuController);
         private const string VIDEO_BUTTON_NAME = "video-btn";
         private const string HSL_BUTTON_NAME = "hsv-btn";
         private const string WORLD_BUTTON_NAME = "world-btn";
@@ -21,7 +22,7 @@ namespace StickHandle.Scripts
                 if(m_CalibrationModeController)
                     return m_CalibrationModeController;
                 
-                Debug.LogError("CalibrationModeController is not set");
+                Debug.LogError($"[{CLASS_NAME}] CalibrationModeController is not set");
                 return m_CalibrationModeController;
             }
         }
@@ -34,7 +35,7 @@ namespace StickHandle.Scripts
                 if(m_TelevisionController)
                     return m_TelevisionController;
                 
-                Debug.LogError("TelevisionController is not set");
+                Debug.LogError($"[{CLASS_NAME}] TelevisionController is not set");
                 return m_TelevisionController;
             }
         }
@@ -47,7 +48,7 @@ namespace StickHandle.Scripts
                 if(m_PanelSettings)
                     return m_PanelSettings;
                 
-                Debug.LogError("PanelSettings is not set");
+                Debug.LogError($"[{CLASS_NAME}] PanelSettings is not set");
                 return m_PanelSettings;
             }
         }
@@ -60,7 +61,7 @@ namespace StickHandle.Scripts
                 if(m_VisualTreeAsset)
                     return m_VisualTreeAsset;
                 
-                Debug.LogError("VisualTreeAsset is not set");
+                Debug.LogError($"[{CLASS_NAME}] VisualTreeAsset is not set");
                 return m_VisualTreeAsset;
             }
         }
@@ -73,7 +74,7 @@ namespace StickHandle.Scripts
                 if(m_StyleSheet)
                     return m_StyleSheet;
                 
-                Debug.LogError("m_StyleSheet is not set");
+                Debug.LogError($"[{CLASS_NAME}] m_StyleSheet is not set");
                 return m_StyleSheet;
             }
         }
@@ -98,60 +99,29 @@ namespace StickHandle.Scripts
         }
         
         private Button m_VideoButton;
-        private Button VideoButton
-        {
-            get
-            {
-               if(m_VideoButton is not null)
-                   return m_VideoButton;
+        private Button VideoButton => m_VideoButton;
 
-               if (UiDocument.rootVisualElement.Q<Button>(VIDEO_BUTTON_NAME) is not { } button)
-               {
-                   Debug.LogError($"Button [{VIDEO_BUTTON_NAME}] is not set");
-                   return null;
-               }
-               
-               m_VideoButton = button;
-               return m_VideoButton;
-            }
-        }
-        
         private Button m_HsvButton;
-        private Button HsvButton
-        {
-            get
-            {
-                if(m_HsvButton is not null)
-                    return m_HsvButton;
+        private Button HsvButton => m_HsvButton;
 
-                if (UiDocument.rootVisualElement.Q<Button>(HSL_BUTTON_NAME) is not { } button)
-                {
-                    Debug.LogError($"Button [{HSL_BUTTON_NAME}] is not set");
-                    return null;
-                }
-               
-                m_HsvButton = button;
-                return m_HsvButton;
-            }
-        }
-        
         private Button m_WorldButton;
-        private Button WorldButton
-        {
-            get
-            {
-                if(m_WorldButton is not null)
-                    return m_WorldButton;
+        private Button WorldButton => m_WorldButton;
 
-                if (UiDocument.rootVisualElement.Q<Button>(WORLD_BUTTON_NAME) is not { } button)
-                {
-                    Debug.LogError($"Button [{WORLD_BUTTON_NAME}] is not set");
-                    return null;
-                }
-               
-                m_WorldButton = button;
-                return m_WorldButton;
-            }
+        private bool TryResolveElements()
+        {
+            var root = UiDocument.rootVisualElement;
+            bool ok = true;
+
+            m_VideoButton = root.Q<Button>(VIDEO_BUTTON_NAME);
+            if (m_VideoButton is null) { Debug.LogError($"[{CLASS_NAME}] Button [{VIDEO_BUTTON_NAME}] not found"); ok = false; }
+
+            m_HsvButton = root.Q<Button>(HSL_BUTTON_NAME);
+            if (m_HsvButton is null) { Debug.LogError($"[{CLASS_NAME}] Button [{HSL_BUTTON_NAME}] not found"); ok = false; }
+
+            m_WorldButton = root.Q<Button>(WORLD_BUTTON_NAME);
+            if (m_WorldButton is null) { Debug.LogError($"[{CLASS_NAME}] Button [{WORLD_BUTTON_NAME}] not found"); ok = false; }
+
+            return ok;
         }
 
         private void OnEnable()
@@ -160,36 +130,38 @@ namespace StickHandle.Scripts
 
             Renderer screenRenderer = TelevisionController.ScreenGameobject.GetComponent<Renderer>();
             screenRenderer.enabled = false;
-            
+
             UiDocument.panelSettings = PanelSettings;
             UiDocument.visualTreeAsset = VisualTreeAsset;
             UiDocument.rootVisualElement.styleSheets.Add(StyleSheet);
             UiDocument.worldSpaceSize = new Vector2(pixelPerUnit, pixelPerUnit);
-            
+
+            if (!TryResolveElements()) return;
+
             VideoButton.clicked += HandleVideoButtonClicked;
-            HsvButton.clicked += HandleHsvButtonClicked;
+            HsvButton.clicked   += HandleHsvButtonClicked;
             WorldButton.clicked += HandleWorldButtonClicked;
-            
+
             TelevisionController.Switch(true);
         }
 
         private void OnDisable()
         {
-            VideoButton.clicked -= HandleVideoButtonClicked;
-            HsvButton.clicked -= HandleHsvButtonClicked;
-            WorldButton.clicked -= HandleWorldButtonClicked;
-            
+            if (m_VideoButton != null) m_VideoButton.clicked -= HandleVideoButtonClicked;
+            if (m_HsvButton != null)   m_HsvButton.clicked   -= HandleHsvButtonClicked;
+            if (m_WorldButton != null) m_WorldButton.clicked  -= HandleWorldButtonClicked;
+
             TelevisionController.Switch(false);
-            
-            m_UiDocument = null;
+
+            m_UiDocument  = null;
             m_VideoButton = null;
-            m_HsvButton = null;
+            m_HsvButton   = null;
             m_WorldButton = null;
         }
 
         private void HandleVideoButtonClicked()
         {
-            Debug.LogWarning("Video button clicked");
+            Debug.LogWarning($"[{CLASS_NAME}] Video button clicked");
         }
 
         private void HandleHsvButtonClicked()
@@ -199,7 +171,7 @@ namespace StickHandle.Scripts
 
         private void HandleWorldButtonClicked()
         {
-            Debug.LogWarning("World button clicked");
+            Debug.LogWarning($"[{CLASS_NAME}] World button clicked");
         }
     }
 }

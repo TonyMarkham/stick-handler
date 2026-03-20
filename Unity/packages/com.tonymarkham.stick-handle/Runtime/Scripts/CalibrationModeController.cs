@@ -6,6 +6,8 @@ namespace StickHandle
 {
     public class CalibrationModeController : MonoBehaviour
     {
+        private const string CLASS_NAME = nameof(CalibrationModeController);
+
         [Header("World Calibration Data")]
         [SerializeField] private WorldCalibrationData m_WorldCalibrationData;
         public WorldCalibrationData WorldCalibrationData => m_WorldCalibrationData;
@@ -24,7 +26,7 @@ namespace StickHandle
 
             if (!m_LeftXButtonAction)
             {
-                Debug.LogError("Left X Button Action not set");
+                Debug.LogError($"[{CLASS_NAME}] Left X Button Action not set");
             }
             else
             {
@@ -34,10 +36,10 @@ namespace StickHandle
             
             if (!m_RightAButtonAction)
             {
-                Debug.LogError("Right A Button Action not set");
+                Debug.LogError($"[{CLASS_NAME}] Right A Button Action not set");
             }
         }
-        
+
         private void OnDisable()
         {
             if (m_LeftXButtonAction)
@@ -71,7 +73,7 @@ namespace StickHandle
             if (m_RightAButtonAction)
                 return true;
             
-            Debug.LogError("Right A Button Action not set");
+            Debug.LogError($"[{CLASS_NAME}] Right A Button Action not set");
             return false;
         }
     }

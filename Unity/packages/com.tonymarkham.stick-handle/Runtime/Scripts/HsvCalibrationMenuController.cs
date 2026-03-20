@@ -11,7 +11,7 @@ namespace StickHandle.Scripts
 {
     public partial class HsvCalibrationMenuController : MonoBehaviour
     {
-        private static string CLASS_NAME = nameof(HsvCalibrationMenuController);
+        private const string CLASS_NAME = nameof(HsvCalibrationMenuController);
 
         private const string SERVER_NAME_ELEMENT_NAME = "ip-field";
         private const string BACK_BUTTON_NAME = "back-btn";
@@ -45,7 +45,6 @@ namespace StickHandle.Scripts
 
         [Header("Calibration")] [SerializeField]
         private CalibrationModeController m_CalibrationModeController;
-
         private CalibrationModeController CalibrationModeController
         {
             get
@@ -53,13 +52,12 @@ namespace StickHandle.Scripts
                 if (m_CalibrationModeController)
                     return m_CalibrationModeController;
 
-                Debug.LogError("CalibrationModeController is not set");
+                Debug.LogError($"[{CLASS_NAME}] CalibrationModeController is not set");
                 return m_CalibrationModeController;
             }
         }
 
         [SerializeField] private TelevisionController m_TelevisionController;
-
         private TelevisionController TelevisionController
         {
             get
@@ -67,13 +65,12 @@ namespace StickHandle.Scripts
                 if (m_TelevisionController)
                     return m_TelevisionController;
 
-                Debug.LogError("TelevisionController is not set");
+                Debug.LogError($"[{CLASS_NAME}] TelevisionController is not set");
                 return m_TelevisionController;
             }
         }
 
         [SerializeField] private PanelSettings m_PanelSettings;
-
         public PanelSettings PanelSettings
         {
             get
@@ -81,13 +78,12 @@ namespace StickHandle.Scripts
                 if (m_PanelSettings)
                     return m_PanelSettings;
 
-                Debug.LogError("PanelSettings is not set");
+                Debug.LogError($"[{CLASS_NAME}] PanelSettings is not set");
                 return m_PanelSettings;
             }
         }
 
         [SerializeField] private VisualTreeAsset m_VisualTreeAsset;
-
         private VisualTreeAsset VisualTreeAsset
         {
             get
@@ -95,13 +91,12 @@ namespace StickHandle.Scripts
                 if (m_VisualTreeAsset)
                     return m_VisualTreeAsset;
 
-                Debug.LogError("VisualTreeAsset is not set");
+                Debug.LogError($"[{CLASS_NAME}] VisualTreeAsset is not set");
                 return m_VisualTreeAsset;
             }
         }
 
         [SerializeField] private StyleSheet m_StyleSheet;
-
         private StyleSheet StyleSheet
         {
             get
@@ -109,7 +104,7 @@ namespace StickHandle.Scripts
                 if (m_StyleSheet)
                     return m_StyleSheet;
 
-                Debug.LogError("m_StyleSheet is not set");
+                Debug.LogError($"[{CLASS_NAME}] m_StyleSheet is not set");
                 return m_StyleSheet;
             }
         }
@@ -118,7 +113,6 @@ namespace StickHandle.Scripts
 
         [Header("Common Image Panel")] [SerializeField]
         private VisualTreeAsset m_ImagePanelUxml;
-
         public VisualTreeAsset ImagePanelUxml
         {
             get
@@ -126,13 +120,12 @@ namespace StickHandle.Scripts
                 if (m_ImagePanelUxml)
                     return m_ImagePanelUxml;
 
-                Debug.LogError("ImagePanelUxml is not set");
+                Debug.LogError($"[{CLASS_NAME}] ImagePanelUxml is not set");
                 return m_ImagePanelUxml;
             }
         }
 
         [SerializeField] private StyleSheet m_ImagePanelStyleSheet;
-
         public StyleSheet ImagePanelStyleSheet
         {
             get
@@ -140,7 +133,7 @@ namespace StickHandle.Scripts
                 if (m_ImagePanelStyleSheet)
                     return m_ImagePanelStyleSheet;
 
-                Debug.LogError("ImagePanelStyleSheet is not set");
+                Debug.LogError($"[{CLASS_NAME}] ImagePanelStyleSheet is not set");
                 return m_ImagePanelStyleSheet;
             }
         }
@@ -164,490 +157,103 @@ namespace StickHandle.Scripts
         private float m_AHoldTime;
         private float m_SaveCompleteCooldown;
         private const float SAVE_HOLD_DURATION = 3f;
+        private bool m_ElementsResolved;
 
         #region UI Elements
 
         private TextField m_ServerNameTextField;
-
-        private TextField ServerNameTextField
-        {
-            get
-            {
-                if (m_ServerNameTextField is not null)
-                    return m_ServerNameTextField;
-
-                if (m_UiDocument.rootVisualElement.Q<TextField>(SERVER_NAME_ELEMENT_NAME) is not { } textField)
-                {
-                    Debug.LogError($"TextField [{SERVER_NAME_ELEMENT_NAME}] is not set");
-                    return null;
-                }
-
-                m_ServerNameTextField = textField;
-                return m_ServerNameTextField;
-            }
-        }
+        private TextField ServerNameTextField => m_ServerNameTextField;
 
         private Button m_BackButton;
-
-        private Button BackButton
-        {
-            get
-            {
-                if (m_BackButton is not null)
-                    return m_BackButton;
-
-                if (m_UiDocument.rootVisualElement.Q<Button>(BACK_BUTTON_NAME) is not { } button)
-                {
-                    Debug.LogError($"Button [{BACK_BUTTON_NAME}] is not set");
-                    return null;
-                }
-
-                m_BackButton = button;
-                return m_BackButton;
-            }
-        }
+        private Button BackButton => m_BackButton;
 
         private Button m_CaptureButton;
-
-        private Button CaptureButton
-        {
-            get
-            {
-                if (m_CaptureButton is not null)
-                    return m_CaptureButton;
-
-                if (m_UiDocument.rootVisualElement.Q<Button>(CAPTURE_BUTTON_NAME) is not { } button)
-                {
-                    Debug.LogError($"Button [{CAPTURE_BUTTON_NAME}] is not set");
-                    return null;
-                }
-
-                m_CaptureButton = button;
-                return m_CaptureButton;
-            }
-        }
+        private Button CaptureButton => m_CaptureButton;
 
         private Label m_CaptureStatusLabel;
-
-        private Label CaptureStatusLabel
-        {
-            get
-            {
-                if (m_CaptureStatusLabel is not null)
-                    return m_CaptureStatusLabel;
-
-                if (m_UiDocument.rootVisualElement.Q<Label>(CAPTURE_STATUS_LABEL_NAME) is not { } label)
-                {
-                    Debug.LogError($"Label [{CAPTURE_STATUS_LABEL_NAME}] is not set");
-                    return null;
-                }
-
-                m_CaptureStatusLabel = label;
-                return m_CaptureStatusLabel;
-            }
-        }
+        private Label CaptureStatusLabel => m_CaptureStatusLabel;
 
         private SliderInt m_MinHueSlider;
-
-        private SliderInt MinHueSlider
-        {
-            get
-            {
-                if (m_MinHueSlider is not null)
-                    return m_MinHueSlider;
-
-                if (m_UiDocument.rootVisualElement.Q<SliderInt>(MIN_HUE_SLIDER_NAME) is not { } slider)
-                {
-                    Debug.LogError($"SliderInt [{MIN_HUE_SLIDER_NAME}] is not set");
-                    return null;
-                }
-
-                m_MinHueSlider = slider;
-                return m_MinHueSlider;
-            }
-        }
+        private SliderInt MinHueSlider => m_MinHueSlider;
 
         private SliderInt m_MaxHueSlider;
-
-        private SliderInt MaxHueSlider
-        {
-            get
-            {
-                if (m_MaxHueSlider is not null)
-                    return m_MaxHueSlider;
-
-                if (m_UiDocument.rootVisualElement.Q<SliderInt>(MAX_HUE_SLIDER_NAME) is not { } slider)
-                {
-                    Debug.LogError($"SliderInt [{MAX_HUE_SLIDER_NAME}] is not set");
-                    return null;
-                }
-
-                m_MaxHueSlider = slider;
-                return m_MaxHueSlider;
-            }
-        }
+        private SliderInt MaxHueSlider => m_MaxHueSlider;
 
         private SliderInt m_MinSaturationSlider;
-
-        private SliderInt MinSaturationSlider
-        {
-            get
-            {
-                if (m_MinSaturationSlider is not null)
-                    return m_MinSaturationSlider;
-
-                if (m_UiDocument.rootVisualElement.Q<SliderInt>(MIN_SATURATION_SLIDER_NAME) is not { } slider)
-                {
-                    Debug.LogError($"SliderInt [{MIN_SATURATION_SLIDER_NAME}] is not set");
-                    return null;
-                }
-
-                m_MinSaturationSlider = slider;
-                return m_MinSaturationSlider;
-            }
-        }
+        private SliderInt MinSaturationSlider => m_MinSaturationSlider;
 
         private SliderInt m_MaxSaturationSlider;
-
-        private SliderInt MaxSaturationSlider
-        {
-            get
-            {
-                if (m_MaxSaturationSlider is not null)
-                    return m_MaxSaturationSlider;
-
-                if (m_UiDocument.rootVisualElement.Q<SliderInt>(MAX_SATURATION_SLIDER_NAME) is not { } slider)
-                {
-                    Debug.LogError($"SliderInt [{MAX_SATURATION_SLIDER_NAME}] is not set");
-                    return null;
-                }
-
-                m_MaxSaturationSlider = slider;
-                return m_MaxSaturationSlider;
-            }
-        }
+        private SliderInt MaxSaturationSlider => m_MaxSaturationSlider;
 
         private SliderInt m_MinValueSlider;
-
-        private SliderInt MinValueSlider
-        {
-            get
-            {
-                if (m_MinValueSlider is not null)
-                    return m_MinValueSlider;
-
-                if (m_UiDocument.rootVisualElement.Q<SliderInt>(MIN_VALUE_SLIDER_NAME) is not { } slider)
-                {
-                    Debug.LogError($"SliderInt [{MIN_VALUE_SLIDER_NAME}] is not set");
-                    return null;
-                }
-
-                m_MinValueSlider = slider;
-                return m_MinValueSlider;
-            }
-        }
+        private SliderInt MinValueSlider => m_MinValueSlider;
 
         private SliderInt m_MaxValueSlider;
-
-        private SliderInt MaxValueSlider
-        {
-            get
-            {
-                if (m_MaxValueSlider is not null)
-                    return m_MaxValueSlider;
-
-                if (m_UiDocument.rootVisualElement.Q<SliderInt>(MAX_VALUE_SLIDER_NAME) is not { } slider)
-                {
-                    Debug.LogError($"SliderInt [{MAX_VALUE_SLIDER_NAME}] is not set");
-                    return null;
-                }
-
-                m_MaxValueSlider = slider;
-                return m_MaxValueSlider;
-            }
-        }
-
-        private Button m_OrangePresetOneButton;
-
-        private Button OrangePresetOneButton
-        {
-            get
-            {
-                if (m_OrangePresetOneButton is not null)
-                    return m_OrangePresetOneButton;
-
-                if (m_UiDocument.rootVisualElement.Q<Button>(ORANGE_PRESET_01_BUTTON_NAME) is not { } button)
-                {
-                    Debug.LogError($"Button [{ORANGE_PRESET_01_BUTTON_NAME}] is not set");
-                    return null;
-                }
-
-                m_OrangePresetOneButton = button;
-                return m_OrangePresetOneButton;
-            }
-        }
-
-        private Button m_OrangePresetTwoButton;
-
-        private Button OrangePresetTwoButton
-        {
-            get
-            {
-                if (m_OrangePresetTwoButton is not null)
-                    return m_OrangePresetTwoButton;
-
-                if (m_UiDocument.rootVisualElement.Q<Button>(ORANGE_PRESET_02_BUTTON_NAME) is not { } button)
-                {
-                    Debug.LogError($"Button [{ORANGE_PRESET_02_BUTTON_NAME}] is not set");
-                    return null;
-                }
-
-                m_OrangePresetTwoButton = button;
-                return m_OrangePresetTwoButton;
-            }
-        }
-
-        private Button m_OrangePresetThreeButton;
-
-        private Button OrangePresetThreeButton
-        {
-            get
-            {
-                if (m_OrangePresetThreeButton is not null)
-                    return m_OrangePresetThreeButton;
-
-                if (m_UiDocument.rootVisualElement.Q<Button>(ORANGE_PRESET_03_BUTTON_NAME) is not { } button)
-                {
-                    Debug.LogError($"Button [{ORANGE_PRESET_03_BUTTON_NAME}] is not set");
-                    return null;
-                }
-
-                m_OrangePresetThreeButton = button;
-                return m_OrangePresetThreeButton;
-            }
-        }
-
-        private Button m_OrangePresetFourButton;
-
-        private Button OrangePresetFourButton
-        {
-            get
-            {
-                if (m_OrangePresetFourButton is not null)
-                    return m_OrangePresetFourButton;
-
-                if (m_UiDocument.rootVisualElement.Q<Button>(ORANGE_PRESET_04_BUTTON_NAME) is not { } button)
-                {
-                    Debug.LogError($"Button [{ORANGE_PRESET_04_BUTTON_NAME}] is not set");
-                    return null;
-                }
-
-                m_OrangePresetFourButton = button;
-                return m_OrangePresetFourButton;
-            }
-        }
-
-        private Button m_OrangePresetFiveButton;
-
-        private Button OrangePresetFiveButton
-        {
-            get
-            {
-                if (m_OrangePresetFiveButton is not null)
-                    return m_OrangePresetFiveButton;
-
-                if (m_UiDocument.rootVisualElement.Q<Button>(ORANGE_PRESET_05_BUTTON_NAME) is not { } button)
-                {
-                    Debug.LogError($"Button [{ORANGE_PRESET_05_BUTTON_NAME}] is not set");
-                    return null;
-                }
-
-                m_OrangePresetFiveButton = button;
-                return m_OrangePresetFiveButton;
-            }
-        }
-
-        private Button m_OrangeSetButton;
-
-        private Button OrangeSetButton
-        {
-            get
-            {
-                if (m_OrangeSetButton is not null)
-                    return m_OrangeSetButton;
-
-                if (m_UiDocument.rootVisualElement.Q<Button>(ORANGE_SET_BUTTON_NAME) is not { } button)
-                {
-                    Debug.LogError($"Button [{ORANGE_SET_BUTTON_NAME}] is not set");
-                    return null;
-                }
-
-                m_OrangeSetButton = button;
-                return m_OrangeSetButton;
-            }
-        }
+        private SliderInt MaxValueSlider => m_MaxValueSlider;
 
         private Label m_OrangeBlobCountLabel;
-
-        private Label OrangeBlobCountLabel
-        {
-            get
-            {
-                if (m_OrangeBlobCountLabel is not null)
-                    return m_OrangeBlobCountLabel;
-
-                if (m_UiDocument.rootVisualElement.Q<Label>(ORANGE_BLOB_COUNT_LABEL_NAME) is not { } label)
-                {
-                    Debug.LogError($"Label [{ORANGE_BLOB_COUNT_LABEL_NAME}] is not set");
-                    return null;
-                }
-
-                m_OrangeBlobCountLabel = label;
-                return m_OrangeBlobCountLabel;
-            }
-        }
-
-        private Button m_GreenPresetOneButton;
-
-        private Button GreenPresetOneButton
-        {
-            get
-            {
-                if (m_GreenPresetOneButton is not null)
-                    return m_GreenPresetOneButton;
-
-                if (m_UiDocument.rootVisualElement.Q<Button>(GREEN_PRESET_01_BUTTON_NAME) is not { } button)
-                {
-                    Debug.LogError($"Button [{GREEN_PRESET_01_BUTTON_NAME}] is not set");
-                    return null;
-                }
-
-                m_GreenPresetOneButton = button;
-                return m_GreenPresetOneButton;
-            }
-        }
-
-        private Button m_GreenPresetTwoButton;
-
-        private Button GreenPresetTwoButton
-        {
-            get
-            {
-                if (m_GreenPresetTwoButton is not null)
-                    return m_GreenPresetTwoButton;
-
-                if (m_UiDocument.rootVisualElement.Q<Button>(GREEN_PRESET_02_BUTTON_NAME) is not { } button)
-                {
-                    Debug.LogError($"Button [{GREEN_PRESET_02_BUTTON_NAME}] is not set");
-                    return null;
-                }
-
-                m_GreenPresetTwoButton = button;
-                return m_GreenPresetTwoButton;
-            }
-        }
-
-        private Button m_GreenPresetThreeButton;
-
-        private Button GreenPresetThreeButton
-        {
-            get
-            {
-                if (m_GreenPresetThreeButton is not null)
-                    return m_GreenPresetThreeButton;
-
-                if (m_UiDocument.rootVisualElement.Q<Button>(GREEN_PRESET_03_BUTTON_NAME) is not { } button)
-                {
-                    Debug.LogError($"Button [{GREEN_PRESET_03_BUTTON_NAME}] is not set");
-                    return null;
-                }
-
-                m_GreenPresetThreeButton = button;
-                return m_GreenPresetThreeButton;
-            }
-        }
-
-        private Button m_GreenPresetFourButton;
-
-        private Button GreenPresetFourButton
-        {
-            get
-            {
-                if (m_GreenPresetFourButton is not null)
-                    return m_GreenPresetFourButton;
-
-                if (m_UiDocument.rootVisualElement.Q<Button>(GREEN_PRESET_04_BUTTON_NAME) is not { } button)
-                {
-                    Debug.LogError($"Button [{GREEN_PRESET_04_BUTTON_NAME}] is not set");
-                    return null;
-                }
-
-                m_GreenPresetFourButton = button;
-                return m_GreenPresetFourButton;
-            }
-        }
-
-        private Button m_GreenPresetFiveButton;
-
-        private Button GreenPresetFiveButton
-        {
-            get
-            {
-                if (m_GreenPresetFiveButton is not null)
-                    return m_GreenPresetFiveButton;
-
-                if (m_UiDocument.rootVisualElement.Q<Button>(GREEN_PRESET_05_BUTTON_NAME) is not { } button)
-                {
-                    Debug.LogError($"Button [{GREEN_PRESET_05_BUTTON_NAME}] is not set");
-                    return null;
-                }
-
-                m_GreenPresetFiveButton = button;
-                return m_GreenPresetFiveButton;
-            }
-        }
-
-        private Button m_GreenSetButton;
-
-        private Button GreenSetButton
-        {
-            get
-            {
-                if (m_GreenSetButton is not null)
-                    return m_GreenSetButton;
-
-                if (m_UiDocument.rootVisualElement.Q<Button>(GREEN_SET_BUTTON_NAME) is not { } button)
-                {
-                    Debug.LogError($"Button [{GREEN_SET_BUTTON_NAME}] is not set");
-                    return null;
-                }
-
-                m_GreenSetButton = button;
-                return m_GreenSetButton;
-            }
-        }
+        private Label OrangeBlobCountLabel => m_OrangeBlobCountLabel;
 
         private Label m_GreenBlobCountLabel;
+        private Label GreenBlobCountLabel => m_GreenBlobCountLabel;
 
-        private Label GreenBlobCountLabel
-        {
-            get
-            {
-                if (m_GreenBlobCountLabel is not null)
-                    return m_GreenBlobCountLabel;
+        private Button m_OrangeSetButton;
+        private Button OrangeSetButton => m_OrangeSetButton;
 
-                if (m_UiDocument.rootVisualElement.Q<Label>(GREEN_BLOB_COUNT_LABEL_NAME) is not { } label)
-                {
-                    Debug.LogError($"Label [{GREEN_BLOB_COUNT_LABEL_NAME}] is not set");
-                    return null;
-                }
-
-                m_GreenBlobCountLabel = label;
-                return m_GreenBlobCountLabel;
-            }
-        }
+        private Button m_GreenSetButton;
+        private Button GreenSetButton => m_GreenSetButton;
 
         #endregion
+
+        private bool TryResolveElements()
+        {
+            var root = m_UiDocument.rootVisualElement;
+            bool ok = true;
+
+            m_ServerNameTextField = root.Q<TextField>(SERVER_NAME_ELEMENT_NAME);
+            if (m_ServerNameTextField is null) { Debug.LogError($"[{CLASS_NAME}] TextField [{SERVER_NAME_ELEMENT_NAME}] not found"); ok = false; }
+
+            m_BackButton = root.Q<Button>(BACK_BUTTON_NAME);
+            if (m_BackButton is null) { Debug.LogError($"[{CLASS_NAME}] Button [{BACK_BUTTON_NAME}] not found"); ok = false; }
+
+            m_CaptureButton = root.Q<Button>(CAPTURE_BUTTON_NAME);
+            if (m_CaptureButton is null) { Debug.LogError($"[{CLASS_NAME}] Button [{CAPTURE_BUTTON_NAME}] not found"); ok = false; }
+
+            m_CaptureStatusLabel = root.Q<Label>(CAPTURE_STATUS_LABEL_NAME);
+            if (m_CaptureStatusLabel is null) { Debug.LogError($"[{CLASS_NAME}] Label [{CAPTURE_STATUS_LABEL_NAME}] not found"); ok = false; }
+
+            m_MinHueSlider = root.Q<SliderInt>(MIN_HUE_SLIDER_NAME);
+            if (m_MinHueSlider is null) { Debug.LogError($"[{CLASS_NAME}] SliderInt [{MIN_HUE_SLIDER_NAME}] not found"); ok = false; }
+
+            m_MaxHueSlider = root.Q<SliderInt>(MAX_HUE_SLIDER_NAME);
+            if (m_MaxHueSlider is null) { Debug.LogError($"[{CLASS_NAME}] SliderInt [{MAX_HUE_SLIDER_NAME}] not found"); ok = false; }
+
+            m_MinSaturationSlider = root.Q<SliderInt>(MIN_SATURATION_SLIDER_NAME);
+            if (m_MinSaturationSlider is null) { Debug.LogError($"[{CLASS_NAME}] SliderInt [{MIN_SATURATION_SLIDER_NAME}] not found"); ok = false; }
+
+            m_MaxSaturationSlider = root.Q<SliderInt>(MAX_SATURATION_SLIDER_NAME);
+            if (m_MaxSaturationSlider is null) { Debug.LogError($"[{CLASS_NAME}] SliderInt [{MAX_SATURATION_SLIDER_NAME}] not found"); ok = false; }
+
+            m_MinValueSlider = root.Q<SliderInt>(MIN_VALUE_SLIDER_NAME);
+            if (m_MinValueSlider is null) { Debug.LogError($"[{CLASS_NAME}] SliderInt [{MIN_VALUE_SLIDER_NAME}] not found"); ok = false; }
+
+            m_MaxValueSlider = root.Q<SliderInt>(MAX_VALUE_SLIDER_NAME);
+            if (m_MaxValueSlider is null) { Debug.LogError($"[{CLASS_NAME}] SliderInt [{MAX_VALUE_SLIDER_NAME}] not found"); ok = false; }
+
+            m_OrangeBlobCountLabel = root.Q<Label>(ORANGE_BLOB_COUNT_LABEL_NAME);
+            if (m_OrangeBlobCountLabel is null) { Debug.LogError($"[{CLASS_NAME}] Label [{ORANGE_BLOB_COUNT_LABEL_NAME}] not found"); ok = false; }
+
+            m_GreenBlobCountLabel = root.Q<Label>(GREEN_BLOB_COUNT_LABEL_NAME);
+            if (m_GreenBlobCountLabel is null) { Debug.LogError($"[{CLASS_NAME}] Label [{GREEN_BLOB_COUNT_LABEL_NAME}] not found"); ok = false; }
+
+            m_OrangeSetButton = root.Q<Button>(ORANGE_SET_BUTTON_NAME);
+            if (m_OrangeSetButton is null) { Debug.LogError($"[{CLASS_NAME}] Button [{ORANGE_SET_BUTTON_NAME}] not found"); ok = false; }
+
+            m_GreenSetButton = root.Q<Button>(GREEN_SET_BUTTON_NAME);
+            if (m_GreenSetButton is null) { Debug.LogError($"[{CLASS_NAME}] Button [{GREEN_SET_BUTTON_NAME}] not found"); ok = false; }
+
+            return ok;
+        }
 
         #region Coroutines
 
@@ -673,34 +279,35 @@ namespace StickHandle.Scripts
             Renderer screenRenderer = TelevisionController.ScreenGameobject.GetComponent<Renderer>();
             screenRenderer.enabled = false;
 
-            // Add a UIDocument to the Setting UI TV
-            if (TelevisionController.ScreenGameobject.GetComponent<UIDocument>() is { } uiDocument)
-            {
-                m_UiDocument = uiDocument;
-            }
-
-            m_UiDocument = TelevisionController.ScreenGameobject.AddComponent<UIDocument>();
+            // Get or add a UIDocument to the Setting UI TV
+            m_UiDocument = TelevisionController.ScreenGameobject.GetComponent<UIDocument>()
+                ?? TelevisionController.ScreenGameobject.AddComponent<UIDocument>();
             m_UiDocument.panelSettings = PanelSettings;
             m_UiDocument.visualTreeAsset = VisualTreeAsset;
             m_UiDocument.rootVisualElement.styleSheets.Add(StyleSheet);
-            m_UiDocument.worldSpaceSize = new Vector2(pixelPerUnit * TelevisionController.Scale,
+            m_UiDocument.worldSpaceSize = new Vector2(
+                pixelPerUnit * TelevisionController.Scale,
                 pixelPerUnit * TelevisionController.Scale);
         }
 
         private void OnEnable()
         {
-            if (ServerNameTextField is not null
-                && CalibrationModeController?.WorldCalibrationData != null
+            if (!m_UiDocument.rootVisualElement.styleSheets.Contains(m_StyleSheet))
+                m_UiDocument.rootVisualElement.styleSheets.Add(m_StyleSheet);
+
+            m_ElementsResolved = TryResolveElements();
+            if (!m_ElementsResolved) return;
+
+            if (CalibrationModeController?.WorldCalibrationData != null
                 && CalibrationModeController.WorldCalibrationData.serverHostAddress is not null)
             {
                 ServerNameTextField.value = CalibrationModeController.WorldCalibrationData.serverHostAddress;
             }
 
-            if (!m_UiDocument.rootVisualElement.styleSheets.Contains(m_StyleSheet))
-                m_UiDocument.rootVisualElement.styleSheets.Add(m_StyleSheet);
-
-            CaptureButton.clicked += HandleCapture;
-            BackButton.clicked += HandleBack;
+            CaptureButton.clicked    += HandleCapture;
+            BackButton.clicked       += HandleBack;
+            OrangeSetButton.clicked  += HandleSetOrange;
+            GreenSetButton.clicked   += HandleSetGreen;
 
             MinHueSlider.RegisterValueChangedCallback(OnSliderChanged);
             MaxHueSlider.RegisterValueChangedCallback(OnSliderChanged);
@@ -722,49 +329,45 @@ namespace StickHandle.Scripts
 
         private void OnDisable()
         {
-            CaptureButton.clicked -= HandleCapture;
-            BackButton.clicked -= HandleBack;
+            if (m_ElementsResolved)
+            {
+                CaptureButton.clicked    -= HandleCapture;
+                BackButton.clicked       -= HandleBack;
+                OrangeSetButton.clicked  -= HandleSetOrange;
+                GreenSetButton.clicked   -= HandleSetGreen;
 
-            m_MinHueSlider.UnregisterValueChangedCallback(OnSliderChanged);
-            m_MaxHueSlider.UnregisterValueChangedCallback(OnSliderChanged);
-            m_MinSaturationSlider.UnregisterValueChangedCallback(OnSliderChanged);
-            m_MaxSaturationSlider.UnregisterValueChangedCallback(OnSliderChanged);
-            m_MinValueSlider.UnregisterValueChangedCallback(OnSliderChanged);
-            m_MaxValueSlider.UnregisterValueChangedCallback(OnSliderChanged);
+                m_MinHueSlider.UnregisterValueChangedCallback(OnSliderChanged);
+                m_MaxHueSlider.UnregisterValueChangedCallback(OnSliderChanged);
+                m_MinSaturationSlider.UnregisterValueChangedCallback(OnSliderChanged);
+                m_MaxSaturationSlider.UnregisterValueChangedCallback(OnSliderChanged);
+                m_MinValueSlider.UnregisterValueChangedCallback(OnSliderChanged);
+                m_MaxValueSlider.UnregisterValueChangedCallback(OnSliderChanged);
 
-            m_OriginalPanel.OnToggleChanged -= OnDetectedToggleChanged;
+                m_OriginalPanel.OnToggleChanged -= OnDetectedToggleChanged;
+            }
 
+            m_ElementsResolved    = false;
             m_ServerNameTextField = null;
-            m_BackButton = null;
-            m_CaptureButton = null;
-            m_CaptureStatusLabel = null;
-            m_MinHueSlider = null;
-            m_MaxHueSlider = null;
+            m_BackButton          = null;
+            m_CaptureButton       = null;
+            m_CaptureStatusLabel  = null;
+            m_MinHueSlider        = null;
+            m_MaxHueSlider        = null;
             m_MinSaturationSlider = null;
             m_MaxSaturationSlider = null;
-            m_MinValueSlider = null;
-            m_MaxValueSlider = null;
-            m_OrangePresetOneButton = null;
-            m_OrangePresetTwoButton = null;
-            m_OrangePresetThreeButton = null;
-            m_OrangePresetFourButton = null;
-            m_OrangePresetFiveButton = null;
-            m_OrangeSetButton = null;
+            m_MinValueSlider      = null;
+            m_MaxValueSlider      = null;
             m_OrangeBlobCountLabel = null;
-            m_GreenPresetOneButton = null;
-            m_GreenPresetTwoButton = null;
-            m_GreenPresetThreeButton = null;
-            m_GreenPresetFourButton = null;
-            m_GreenPresetFiveButton = null;
-            m_GreenSetButton = null;
-            m_GreenBlobCountLabel = null;
+            m_GreenBlobCountLabel  = null;
+            m_OrangeSetButton      = null;
+            m_GreenSetButton       = null;
 
             TelevisionController.Switch(false);
 
-            m_HoveredPreset  = null;
-            m_HoveredOverlay = null;
-            m_HoveredBtn     = null;
-            m_AHoldTime      = 0;
+            m_HoveredPreset        = null;
+            m_HoveredOverlay       = null;
+            m_HoveredBtn           = null;
+            m_AHoldTime            = 0;
             m_SaveCompleteCooldown = 0;
         }
 
@@ -782,7 +385,7 @@ namespace StickHandle.Scripts
                 || CalibrationModeController.WorldCalibrationData.serverHostAddress is null
                 || string.IsNullOrWhiteSpace(CalibrationModeController.WorldCalibrationData.serverHostAddress))
             {
-                Debug.LogWarning("Default Server Host Address is not set");
+                Debug.LogWarning($"[{CLASS_NAME}] Default Server Host Address is not set");
             }
 
             return string.IsNullOrWhiteSpace(ServerNameTextField?.value)
@@ -797,7 +400,7 @@ namespace StickHandle.Scripts
 
         private void SetStatus(string msg)
         {
-            Debug.Log($"[HsvFilter] {msg}");
+            Debug.Log($"[{CLASS_NAME}] {msg}");
             if (CaptureStatusLabel != null) CaptureStatusLabel.text = msg;
         }
 
@@ -850,18 +453,16 @@ namespace StickHandle.Scripts
         {
             if (panel == null)
             {
-                Debug.LogError($"[{GetType().Name}] Could not find {panel.LabelElement.text}");
+                Debug.LogError($"[{CLASS_NAME}] FetchImage called with a null panel (url: {url})");
                 yield break;
             }
-
-            ;
 
             using var req = UnityWebRequestTexture.GetTexture(url);
             yield return req.SendWebRequest();
 
             if (req.result != UnityWebRequest.Result.Success)
             {
-                Debug.LogWarning($"[{GetType().Name}] FetchImage failed for {url}: {req.error}");
+                Debug.LogWarning($"[{CLASS_NAME}] FetchImage failed for {url}: {req.error}");
                 yield break;
             }
 
@@ -890,7 +491,7 @@ namespace StickHandle.Scripts
 
             if (req.result != UnityWebRequest.Result.Success)
             {
-                Debug.LogWarning($"[HsvFilter] FetchOverlayWithCount failed for {url}: {req.error}");
+                Debug.LogWarning($"[{CLASS_NAME}] FetchOverlayWithCount failed for {url}: {req.error}");
                 yield break;
             }
 
@@ -1064,13 +665,13 @@ namespace StickHandle.Scripts
                 var btn = root.Q<Button>($"{bankKey}-preset-{i + 1}");
                 if (btn == null)
                 {
-                    Debug.LogWarning($"[HsvFilter] Button '{bankKey}-preset-{i + 1}' not found in UXML");
+                    Debug.LogWarning($"[{CLASS_NAME}] Button '{bankKey}-preset-{i + 1}' not found in UXML");
                     continue;
                 }
 
                 if (capturedIndex >= bank.presets.Length)
                 {
-                    Debug.LogWarning($"[HsvFilter] No preset data for '{bankKey}' index {capturedIndex}");
+                    Debug.LogWarning($"[{CLASS_NAME}] No preset data for '{bankKey}' index {capturedIndex}");
                     continue;
                 }
 
@@ -1112,7 +713,7 @@ namespace StickHandle.Scripts
 #else
         File.WriteAllText(Path.Combine(Application.persistentDataPath, PRESET_FILE_NAME), json);
 #endif
-            Debug.Log("[HsvFilter] Presets saved");
+            Debug.Log($"[{CLASS_NAME}] Presets saved");
         }
 
         private void ApplyPreset(HsvPreset p)
@@ -1130,5 +731,30 @@ namespace StickHandle.Scripts
                 ((p.hMin + p.hMax) / 2f) / 179f,
                 ((p.sMin + p.sMax) / 2f) / 255f,
                 ((p.vMin + p.vMax) / 2f) / 255f);
+
+        // ── Set buttons ──────────────────────────────────────────────────────────
+
+        private void HandleSetOrange() { m_ActiveBank = "orange"; StartCoroutine(PutHsvFilter("orange")); }
+        private void HandleSetGreen()  { m_ActiveBank = "green";  StartCoroutine(PutHsvFilter("green")); }
+
+        private IEnumerator PutHsvFilter(string color)
+        {
+            string json = $"{{\"h_min\":{MinHueSlider.value},\"h_max\":{MaxHueSlider.value}," +
+                          $"\"s_min\":{MinSaturationSlider.value},\"s_max\":{MaxSaturationSlider.value}," +
+                          $"\"v_min\":{MinValueSlider.value},\"v_max\":{MaxValueSlider.value}}}";
+
+            byte[] body = System.Text.Encoding.UTF8.GetBytes(json);
+
+            using var req = new UnityWebRequest($"http://{Host()}/hsv/{color}", "PUT");
+            req.uploadHandler   = new UploadHandlerRaw(body);
+            req.downloadHandler = new DownloadHandlerBuffer();
+            req.SetRequestHeader("Content-Type", "application/json");
+            yield return req.SendWebRequest();
+
+            if (req.result != UnityWebRequest.Result.Success)
+                SetStatus($"Set {color} failed: {req.error}");
+            else
+                SetStatus($"{color} filter updated");
+        }
     }
 }

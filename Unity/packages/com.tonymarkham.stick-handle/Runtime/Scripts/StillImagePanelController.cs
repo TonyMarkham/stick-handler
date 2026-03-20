@@ -28,6 +28,7 @@ namespace StickHandle.Scripts
     /// </remarks>
     public class StillImagePanelController : MonoBehaviour
     {
+        private const string CLASS_NAME = nameof(StillImagePanelController);
         private const string IMAGE_DISPLAY_ELEMENT_NAME = "image-display";
         private const string LABEL_NAME = "panel-label";
         private const string TOGGLE_NAME = "detected-toggle";
@@ -81,7 +82,7 @@ namespace StickHandle.Scripts
 
                 if (m_UiDocument.rootVisualElement.Q<VisualElement>(IMAGE_DISPLAY_ELEMENT_NAME) is not { } element)
                 {
-                    Debug.LogError($"VisualElement [{IMAGE_DISPLAY_ELEMENT_NAME}] is not set");
+                    Debug.LogError($"[{CLASS_NAME}] VisualElement [{IMAGE_DISPLAY_ELEMENT_NAME}] is not set");
                     return null;
                 }
                
@@ -100,7 +101,7 @@ namespace StickHandle.Scripts
 
                 if (m_UiDocument.rootVisualElement.Q<Label>(LABEL_NAME) is not { } label)
                 {
-                    Debug.LogError($"Label [{LABEL_NAME}] is not set");
+                    Debug.LogError($"[{CLASS_NAME}] Label [{LABEL_NAME}] is not set");
                     return null;
                 }
                
@@ -119,7 +120,7 @@ namespace StickHandle.Scripts
 
                 if (m_UiDocument.rootVisualElement.Q<Toggle>(TOGGLE_NAME) is not { } toggle)
                 {
-                    Debug.LogError($"Toggle [{TOGGLE_NAME}] is not set");
+                    Debug.LogError($"[{CLASS_NAME}] Toggle [{TOGGLE_NAME}] is not set");
                     return null;
                 }
                
@@ -144,7 +145,7 @@ namespace StickHandle.Scripts
         {
             if (GetComponentInParent<HsvCalibrationMenuController>() is not { } hsvCalibrationMenuController)
             {
-                Debug.LogError($"[{GetType().Name}] HsvCalibrationMenuController not found in any parent");
+                Debug.LogError($"[{CLASS_NAME}] HsvCalibrationMenuController not found in any parent");
                 return;
             }
 
