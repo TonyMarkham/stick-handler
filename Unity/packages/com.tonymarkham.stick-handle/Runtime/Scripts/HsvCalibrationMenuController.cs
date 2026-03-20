@@ -269,6 +269,7 @@ namespace StickHandle.Scripts
         #region Coroutines
 
         private Coroutine m_PendingRefresh;
+        private Coroutine m_CaptureCoroutine;
 
         #endregion
 
@@ -452,9 +453,10 @@ namespace StickHandle.Scripts
 
         private void HandleCapture()
         {
-            StopAllCoroutines();
-            m_PendingRefresh = null;
-            StartCoroutine(CaptureAndFetch());
+            if (m_CaptureCoroutine != null) StopCoroutine(m_CaptureCoroutine);
+            if (m_PendingRefresh   != null) StopCoroutine(m_PendingRefresh);
+            m_PendingRefresh   = null;
+            m_CaptureCoroutine = StartCoroutine(CaptureAndFetch());
         }
 
         private IEnumerator CaptureAndFetch()
@@ -464,7 +466,7 @@ namespace StickHandle.Scripts
 
             string host = Host();
 
-            using var captureReq = new UnityWebRequest($"http://{host}/still/capture", "POST");
+            using UnityWebRequest captureReq = new UnityWebRequest($"http://{host}/still/capture", "POST");
             captureReq.downloadHandler = new DownloadHandlerBuffer();
             yield return captureReq.SendWebRequest();
 
@@ -484,6 +486,7 @@ namespace StickHandle.Scripts
 
             SetStatus("Ready — adjust sliders to refine");
             CaptureButton.SetEnabled(true);
+            m_CaptureCoroutine = null;
         }
 
         // ── Image fetching ───────────────────────────────────────────────────────
@@ -496,7 +499,7 @@ namespace StickHandle.Scripts
                 yield break;
             }
 
-            using var req = UnityWebRequestTexture.GetTexture(url);
+            using UnityWebRequest req = UnityWebRequestTexture.GetTexture(url);
             yield return req.SendWebRequest();
 
             if (req.result != UnityWebRequest.Result.Success)
@@ -525,7 +528,7 @@ namespace StickHandle.Scripts
         {
             if (panel == null) yield break;
 
-            using var req = UnityWebRequestTexture.GetTexture(url);
+            using UnityWebRequest req = UnityWebRequestTexture.GetTexture(url);
             yield return req.SendWebRequest();
 
             if (req.result != UnityWebRequest.Result.Success)
@@ -597,7 +600,7 @@ namespace StickHandle.Scripts
             m_UseDetected = useDetected;
             if (!m_HasCaptured) return;
 
-            StopAllCoroutines();
+            if (m_PendingRefresh != null) StopCoroutine(m_PendingRefresh);
             m_PendingRefresh = null;
             StartCoroutine(FetchOriginal());
         }
@@ -816,7 +819,7 @@ namespace StickHandle.Scripts
 
             byte[] body = System.Text.Encoding.UTF8.GetBytes(json);
 
-            using var req = new UnityWebRequest($"http://{Host()}/hsv/{color}", "PUT");
+            using UnityWebRequest req = new UnityWebRequest($"http://{Host()}/hsv/{color}", "PUT");
             req.uploadHandler   = new UploadHandlerRaw(body);
             req.downloadHandler = new DownloadHandlerBuffer();
             req.SetRequestHeader("Content-Type", "application/json");

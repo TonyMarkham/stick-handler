@@ -11,6 +11,11 @@ namespace StickHandle.Scripts
             MRUK.Instance.SceneLoadedEvent.AddListener(OnSceneLoaded);
         }
 
+        private void OnDestroy()
+        {
+            MRUK.Instance.SceneLoadedEvent.RemoveListener(OnSceneLoaded);
+        }
+
         void OnSceneLoaded()
         {
             if (MRUK.Instance.GetCurrentRoom() is not { } room
@@ -22,12 +27,14 @@ namespace StickHandle.Scripts
 
             Vector3 pos = floorAnchor.GetAnchorCenter();
             Quaternion rot = floorAnchor.gameObject.transform.rotation;
-            
+
             gameObject.transform.position = pos;
             gameObject.transform.rotation = rot;
 
-            // Optional: create your own persistent spatial anchor here
-            gameObject.AddComponent<OVRSpatialAnchor>();
+            if (gameObject.TryGetComponent<OVRSpatialAnchor>(out var anchor))
+                anchor.enabled = true;
+            else
+                gameObject.AddComponent<OVRSpatialAnchor>();
         }
     }
 }
