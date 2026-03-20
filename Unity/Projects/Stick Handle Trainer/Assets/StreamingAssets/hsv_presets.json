@@ -1,0 +1,94 @@
+{
+    "banks": [
+        {
+            "name": "orange",
+            "presets": [
+                {
+                    "hMin": 10,
+                    "hMax": 20,
+                    "sMin": 200,
+                    "sMax": 255,
+                    "vMin": 200,
+                    "vMax": 255
+                },
+                {
+                    "hMin": 5,
+                    "hMax": 25,
+                    "sMin": 120,
+                    "sMax": 255,
+                    "vMin": 100,
+                    "vMax": 255
+                },
+                {
+                    "hMin": 5,
+                    "hMax": 25,
+                    "sMin": 120,
+                    "sMax": 255,
+                    "vMin": 100,
+                    "vMax": 255
+                },
+                {
+                    "hMin": 5,
+                    "hMax": 25,
+                    "sMin": 120,
+                    "sMax": 255,
+                    "vMin": 100,
+                    "vMax": 255
+                },
+                {
+                    "hMin": 5,
+                    "hMax": 25,
+                    "sMin": 192,
+                    "sMax": 255,
+                    "vMin": 100,
+                    "vMax": 255
+                }
+            ]
+        },
+        {
+            "name": "green",
+            "presets": [
+                {
+                    "hMin": 75,
+                    "hMax": 90,
+                    "sMin": 41,
+                    "sMax": 255,
+                    "vMin": 142,
+                    "vMax": 255
+                },
+                {
+                    "hMin": 40,
+                    "hMax": 80,
+                    "sMin": 60,
+                    "sMax": 255,
+                    "vMin": 60,
+                    "vMax": 255
+                },
+                {
+                    "hMin": 40,
+                    "hMax": 80,
+                    "sMin": 60,
+                    "sMax": 255,
+                    "vMin": 60,
+                    "vMax": 255
+                },
+                {
+                    "hMin": 40,
+                    "hMax": 80,
+                    "sMin": 60,
+                    "sMax": 255,
+                    "vMin": 60,
+                    "vMax": 255
+                },
+                {
+                    "hMin": 75,
+                    "hMax": 90,
+                    "sMin": 41,
+                    "sMax": 255,
+                    "vMin": 142,
+                    "vMax": 255
+                }
+            ]
+        }
+    ]
+}

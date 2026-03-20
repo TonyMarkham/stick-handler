@@ -1,0 +1,9 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" editor-extension-mode="False">
+    <ui:VisualElement name="root" class="still-panel">
+        <ui:VisualElement name="panel-header" class="panel-header">
+            <ui:Label name="panel-label" text="Image" class="panel-label" />
+            <ui:Toggle name="detected-toggle" label="Detected" class="detected-toggle" />
+        </ui:VisualElement>
+        <ui:VisualElement name="image-display" class="image-display" />
+    </ui:VisualElement>
+</ui:UXML>

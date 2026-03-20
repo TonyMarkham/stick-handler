@@ -49,15 +49,15 @@ namespace StickHandle.Prefabs.TV
         [SerializeField] private bool m_IsOn;
         public bool IsOn => m_IsOn;
         
-        private List<Collider> m_Colliders;
-        public List<Collider> Colliders
+        private List<BoxCollider> m_Colliders;
+        public List<BoxCollider> Colliders
         {
             get
             {
                 if(m_Colliders is not null && m_Colliders.Count > 0)
                     return m_Colliders;
 
-                m_Colliders = GetComponents<Collider>().ToList();
+                m_Colliders = GetComponents<BoxCollider>().ToList();
                 return m_Colliders;
             }
         }
@@ -92,6 +92,12 @@ namespace StickHandle.Prefabs.TV
         public void SwitchOnOff()
         {
             Switch();
+        }
+
+        public void DisableScreen()
+        {
+            Renderer screenRenderer = ScreenGameobject.GetComponent<Renderer>();
+            screenRenderer.enabled = false;
         }
     }
 }

@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cmd /c \"dir D:\\\\git\\\\stick-handler\\\\packages\\\\com.tonymarkham.stick-handle\\\\Runtime\\\\Scripts\\\\\")",
+      "Bash(cmd /c 'dir \"D:\\\\git\\\\stick-handler\\\\packages\\\\com.tonymarkham.stick-handle\\\\Runtime\\\\Scripts\"')",
+      "Bash(cmd /c 'dir \"D:\\\\git\\\\stick-handler\\\\packages\\\\com.tonymarkham.stick-handle\\\\Runtime\"')",
+      "Bash(cmd /c \"dir D:\\\\git\\\\stick-handler\\\\packages\")"
+    ]
+  }
+}

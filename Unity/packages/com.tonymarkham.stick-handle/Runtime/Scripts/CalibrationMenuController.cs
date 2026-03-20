@@ -78,44 +78,22 @@ namespace StickHandle.Scripts
             }
         }
         
-        private UIDocument m_UIDocument;
-        private UIDocument UIDocument
+        private UIDocument m_UiDocument;
+        private UIDocument UiDocument
         {
             get
             {
-                if(m_UIDocument)
-                    return m_UIDocument;
+                if(m_UiDocument)
+                    return m_UiDocument;
                 
-                if(!TelevisionController)
-                    return m_UIDocument;
-
-                if (TelevisionController.ScreenGameobject is not { } screenGameobject)
-                    return m_UIDocument;
-
-                if(screenGameobject.GetComponent<UIDocument>() is { } uiDocument)
-                    return uiDocument;
-
-                if (screenGameobject.AddComponent<UIDocument>() is not { } newUIDocument)
+                if (TelevisionController.ScreenGameobject.GetComponent<UIDocument>() is { } uiDocument)
                 {
-                    Debug.LogError("Could not  add UIDocument");
-                    return null;
+                    m_UiDocument = uiDocument;
+                    return m_UiDocument;
                 }
-
-                if (!Utilities.TryGetPixelPerUnitFromPanelSettings(PanelSettings, out float pixelPerUnit))
-                {
-                    Debug.LogError("Could not extract pixel per unit from panel settings");
-                    return null;
-                }
-
-                Renderer screenRenderer = screenGameobject.GetComponent<Renderer>();
-                screenRenderer.enabled = false;
-                newUIDocument.panelSettings = PanelSettings;
-                newUIDocument.visualTreeAsset = VisualTreeAsset;
-                newUIDocument.rootVisualElement.styleSheets.Add(StyleSheet);
-                newUIDocument.worldSpaceSize = new Vector2(pixelPerUnit, pixelPerUnit);
-                m_UIDocument = newUIDocument;
                 
-                return m_UIDocument;
+                m_UiDocument = TelevisionController.ScreenGameobject.AddComponent<UIDocument>();
+                return m_UiDocument;
             }
         }
         
@@ -127,7 +105,7 @@ namespace StickHandle.Scripts
                if(m_VideoButton is not null)
                    return m_VideoButton;
 
-               if (UIDocument.rootVisualElement.Q<Button>(VIDEO_BUTTON_NAME) is not { } button)
+               if (UiDocument.rootVisualElement.Q<Button>(VIDEO_BUTTON_NAME) is not { } button)
                {
                    Debug.LogError($"Button [{VIDEO_BUTTON_NAME}] is not set");
                    return null;
@@ -146,7 +124,7 @@ namespace StickHandle.Scripts
                 if(m_HsvButton is not null)
                     return m_HsvButton;
 
-                if (UIDocument.rootVisualElement.Q<Button>(HSL_BUTTON_NAME) is not { } button)
+                if (UiDocument.rootVisualElement.Q<Button>(HSL_BUTTON_NAME) is not { } button)
                 {
                     Debug.LogError($"Button [{HSL_BUTTON_NAME}] is not set");
                     return null;
@@ -165,7 +143,7 @@ namespace StickHandle.Scripts
                 if(m_WorldButton is not null)
                     return m_WorldButton;
 
-                if (UIDocument.rootVisualElement.Q<Button>(WORLD_BUTTON_NAME) is not { } button)
+                if (UiDocument.rootVisualElement.Q<Button>(WORLD_BUTTON_NAME) is not { } button)
                 {
                     Debug.LogError($"Button [{WORLD_BUTTON_NAME}] is not set");
                     return null;
@@ -178,48 +156,35 @@ namespace StickHandle.Scripts
 
         private void OnEnable()
         {
-            if (VideoButton is { } videoButton)
-            {
-                videoButton.clicked += HandleVideoButtonClicked;
-            }
-            
-            if (HsvButton is { } hsvButton)
-            {
-                hsvButton.clicked += HandleHsvButtonClicked;
-            }
-            
-            if (WorldButton is { } worldButton)
-            {
-                worldButton.clicked += HandleWorldButtonClicked;
-            }
+            float pixelPerUnit = PanelSettings.PixelsPerUnitReflection();
 
-            if (!UIDocument.rootVisualElement.styleSheets.Contains(StyleSheet))
-            {
-                UIDocument.rootVisualElement.styleSheets.Add(StyleSheet);
-            }
+            Renderer screenRenderer = TelevisionController.ScreenGameobject.GetComponent<Renderer>();
+            screenRenderer.enabled = false;
             
-            if(UIDocument)
-            {
-                TelevisionController.Switch(true);
-            }
+            UiDocument.panelSettings = PanelSettings;
+            UiDocument.visualTreeAsset = VisualTreeAsset;
+            UiDocument.rootVisualElement.styleSheets.Add(StyleSheet);
+            UiDocument.worldSpaceSize = new Vector2(pixelPerUnit, pixelPerUnit);
+            
+            VideoButton.clicked += HandleVideoButtonClicked;
+            HsvButton.clicked += HandleHsvButtonClicked;
+            WorldButton.clicked += HandleWorldButtonClicked;
+            
+            TelevisionController.Switch(true);
         }
 
         private void OnDisable()
         {
-            if (VideoButton is { } videoButton)
-            {
-                videoButton.clicked -= HandleVideoButtonClicked;
-            }
+            VideoButton.clicked -= HandleVideoButtonClicked;
+            HsvButton.clicked -= HandleHsvButtonClicked;
+            WorldButton.clicked -= HandleWorldButtonClicked;
             
-            if (HsvButton is { } hsvButton)
-            {
-                hsvButton.clicked -= HandleHsvButtonClicked;
-            }
+            TelevisionController.Switch(false);
             
-            if (WorldButton is { } worldButton)
-            {
-                worldButton.clicked -= HandleWorldButtonClicked;
-            }
+            m_UiDocument = null;
+            m_VideoButton = null;
+            m_HsvButton = null;
+            m_WorldButton = null;
         }
 
         private void HandleVideoButtonClicked()
