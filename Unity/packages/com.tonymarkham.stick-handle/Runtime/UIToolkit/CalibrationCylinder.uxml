@@ -1,0 +1,28 @@
+<ui:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="CalibrationCylinder.uss"/>
+    <ui:VisualElement name="root-container">
+        <ui:VisualElement name="top-row">
+            <ui:VisualElement name="top-row-left"/>
+            <ui:VisualElement name="top-row-middle">
+                <ui:Label text="n" name="label-top" class="direction-label"/>
+            </ui:VisualElement>
+            <ui:VisualElement name="top-row-right"/>
+        </ui:VisualElement>
+        <ui:VisualElement name="middle-row">
+            <ui:VisualElement name="middle-row-left">
+                <ui:Label text="n" name="label-left" class="direction-label"/>
+            </ui:VisualElement>
+            <ui:VisualElement name="middle-row-middle"/>
+            <ui:VisualElement name="middle-row-right">
+                <ui:Label text="n" name="label-right" class="direction-label"/>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="bottom-row">
+            <ui:VisualElement name="bottom-row-left"/>
+            <ui:VisualElement name="bottom-row-middle">
+                <ui:Label text="n" name="label-bottom" class="direction-label"/>
+            </ui:VisualElement>
+            <ui:VisualElement name="bottom-row-right"/>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

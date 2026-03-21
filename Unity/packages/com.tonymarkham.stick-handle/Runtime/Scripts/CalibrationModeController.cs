@@ -19,12 +19,14 @@ namespace StickHandle.Scripts
         [Header("Calibration")]
         [RequiredRef, SerializeField] private GameObject m_ConfigurationMenuGameObject;
         [RequiredRef, SerializeField] private GameObject m_HsvConfigurationMenuGameObject;
+        [RequiredRef, SerializeField] private GameObject m_WorldOrientationGameObject;
 
         private void Awake()
         {
             if (!m_WorldCalibrationData)           throw new MissingReferenceException($"[{CLASS_NAME}] WorldCalibrationData is not set");
             if (!m_ConfigurationMenuGameObject)    throw new MissingReferenceException($"[{CLASS_NAME}] ConfigurationMenuGameObject is not set");
             if (!m_HsvConfigurationMenuGameObject) throw new MissingReferenceException($"[{CLASS_NAME}] HsvConfigurationMenuGameObject is not set");
+            if (!m_WorldOrientationGameObject)     throw new MissingReferenceException($"[{CLASS_NAME}] WorldOrientationGameObject is not set");
             if (!m_LeftXButtonAction)              throw new MissingReferenceException($"[{CLASS_NAME}] LeftXButtonAction is not set");
             if (!m_RightAButtonAction)             throw new MissingReferenceException($"[{CLASS_NAME}] RightAButtonAction is not set");
         }
@@ -51,12 +53,21 @@ namespace StickHandle.Scripts
         {
             m_ConfigurationMenuGameObject.SetActive(true);
             m_HsvConfigurationMenuGameObject.SetActive(false);
+            m_WorldOrientationGameObject.SetActive(false);
         }
 
         public void ActivateHsvCalibrationMenu()
         {
             m_HsvConfigurationMenuGameObject.SetActive(true);
             m_ConfigurationMenuGameObject.SetActive(false);
+            m_WorldOrientationGameObject.SetActive(false);
+        }
+
+        public void ActivateWorldOrientationMenu()
+        {
+            m_WorldOrientationGameObject.SetActive(true);
+            m_ConfigurationMenuGameObject.SetActive(false);
+            m_HsvConfigurationMenuGameObject.SetActive(false);
         }
 
         public void HandleToggleCalibrationMode(InputAction.CallbackContext obj)

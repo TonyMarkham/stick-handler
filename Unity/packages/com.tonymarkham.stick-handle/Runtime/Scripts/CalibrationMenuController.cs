@@ -132,7 +132,7 @@ namespace StickHandle.Scripts
 
         private void HandleWorldButtonClicked()
         {
-            Debug.LogWarning($"[{CLASS_NAME}] World button clicked");
+            CalibrationModeController.ActivateWorldOrientationMenu();
         }
     }
 }

@@ -57,18 +57,24 @@
     <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\Attributes\RequiredRefAttribute.cs" />
     <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\PanelSettingsExtensionMethods.cs" />
     <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\ServerHsvRange.cs" />
+    <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\WorldOrientationController.cs" />
     <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\SavingOverlay.cs" />
     <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\CalibrationModeController.cs" />
     <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\PresetConfig.cs" />
     <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\CalibrationMenuController.cs" />
+    <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\CalibrationCylinderLabelController.cs" />
     <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\Utilities.cs" />
     <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\ServerHsvResponse.cs" />
     <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\HsvPreset.cs" />
+    <None Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\UIToolkit\WorldOrientation.uxml" />
+    <None Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\UIToolkit\CalibrationCylinder.uss" />
     <None Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\UIToolkit\HsvFilter.uss" />
     <None Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\UIToolkit\StillImagePanel.uxml" />
+    <None Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\UIToolkit\WorldOrientation.uss" />
     <None Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\UIToolkit\StillImagePanel.uss" />
     <None Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\UIToolkit\HsvFilter.uxml" />
     <None Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\UIToolkit\CalibrationMenu.uxml" />
+    <None Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\UIToolkit\CalibrationCylinder.uxml" />
     <None Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\UIToolkit\CalibrationMenu.uss" />
     <None Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\stick-handle.asmdef" />
     <Reference Include="UnityEngine">
@@ -865,6 +871,9 @@
     </Reference>
     <Reference Include="Unity.InputSystem">
       <HintPath>D:\git\stick-handler\Unity\Projects\Stick Handle Trainer\Library\ScriptAssemblies\Unity.InputSystem.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.XR.Interaction.Toolkit">
+      <HintPath>D:\git\stick-handler\Unity\Projects\Stick Handle Trainer\Library\ScriptAssemblies\Unity.XR.Interaction.Toolkit.dll</HintPath>
     </Reference>
     <Reference Include="UnityEditor.UI">
       <HintPath>D:\git\stick-handler\Unity\Projects\Stick Handle Trainer\Library\ScriptAssemblies\UnityEditor.UI.dll</HintPath>
