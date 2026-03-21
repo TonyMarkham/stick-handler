@@ -34,8 +34,12 @@ namespace StickHandle.Scripts
     [RequiredUxmlElement(typeof(SavingOverlay), ORANGE_PRESET_04_OVERLAY_NAME)]
     [RequiredUxmlElement(typeof(SavingOverlay), ORANGE_PRESET_05_OVERLAY_NAME)]
     [RequiredUxmlElement(typeof(Label),      GREEN_BLOB_COUNT_LABEL_NAME)]
-    [RequiredUxmlElement(typeof(Button),     ORANGE_SERVER_VALUE_BUTTON_NAME)]
-    [RequiredUxmlElement(typeof(Button),     GREEN_SERVER_VALUE_BUTTON_NAME)]
+    [RequiredUxmlElement(typeof(Button),        ORANGE_SERVER_VALUE_BUTTON_NAME)]
+    [RequiredUxmlElement(typeof(Button),        GREEN_SERVER_VALUE_BUTTON_NAME)]
+    [RequiredUxmlElement(typeof(Button),        ORANGE_RADIO_BUTTON_NAME)]
+    [RequiredUxmlElement(typeof(Button),        GREEN_RADIO_BUTTON_NAME)]
+    [RequiredUxmlElement(typeof(VisualElement), ORANGE_PRESET_ROW_NAME)]
+    [RequiredUxmlElement(typeof(VisualElement), GREEN_PRESET_ROW_NAME)]
     [RequiredUxmlElement(typeof(Button),     GREEN_SET_BUTTON_NAME)]
     [RequiredUxmlElement(typeof(Button),     GREEN_PRESET_01_BUTTON_NAME)]
     [RequiredUxmlElement(typeof(Button),     GREEN_PRESET_02_BUTTON_NAME)]
@@ -84,6 +88,12 @@ namespace StickHandle.Scripts
 
         private const string ORANGE_SERVER_VALUE_BUTTON_NAME = "orange-server-value-btn";
         private const string GREEN_SERVER_VALUE_BUTTON_NAME  = "green-server-value-btn";
+
+        private const string ORANGE_RADIO_BUTTON_NAME = "orange-radio";
+        private const string GREEN_RADIO_BUTTON_NAME  = "green-radio";
+        private const string ORANGE_PRESET_ROW_NAME   = "orange-preset-row";
+        private const string GREEN_PRESET_ROW_NAME    = "green-preset-row";
+        private const string USS_RADIO_SELECTED        = "radio-selected";
 
         private const string ORANGE_PRESET_01_OVERLAY_NAME = "orange-preset-1-overlay";
         private const string ORANGE_PRESET_02_OVERLAY_NAME = "orange-preset-2-overlay";
@@ -201,6 +211,15 @@ namespace StickHandle.Scripts
         private HsvPreset m_OrangeServerValue;
         private HsvPreset m_GreenServerValue;
 
+        private Button m_OrangeRadioButton;
+        private Button OrangeRadioButton => m_OrangeRadioButton;
+
+        private Button m_GreenRadioButton;
+        private Button GreenRadioButton => m_GreenRadioButton;
+
+        private VisualElement m_OrangePresetRow;
+        private VisualElement m_GreenPresetRow;
+
         private Button m_OrangePreset1, m_OrangePreset2, m_OrangePreset3, m_OrangePreset4, m_OrangePreset5;
         private Button m_GreenPreset1,  m_GreenPreset2,  m_GreenPreset3,  m_GreenPreset4,  m_GreenPreset5;
 
@@ -262,6 +281,18 @@ namespace StickHandle.Scripts
 
             m_GreenServerValueButton = root.Q<Button>(GREEN_SERVER_VALUE_BUTTON_NAME);
             if (m_GreenServerValueButton is null) throw new InvalidOperationException($"[{CLASS_NAME}] Button [{GREEN_SERVER_VALUE_BUTTON_NAME}] not found");
+
+            m_OrangeRadioButton = root.Q<Button>(ORANGE_RADIO_BUTTON_NAME);
+            if (m_OrangeRadioButton is null) throw new InvalidOperationException($"[{CLASS_NAME}] Button [{ORANGE_RADIO_BUTTON_NAME}] not found");
+
+            m_GreenRadioButton = root.Q<Button>(GREEN_RADIO_BUTTON_NAME);
+            if (m_GreenRadioButton is null) throw new InvalidOperationException($"[{CLASS_NAME}] Button [{GREEN_RADIO_BUTTON_NAME}] not found");
+
+            m_OrangePresetRow = root.Q<VisualElement>(ORANGE_PRESET_ROW_NAME);
+            if (m_OrangePresetRow is null) throw new InvalidOperationException($"[{CLASS_NAME}] VisualElement [{ORANGE_PRESET_ROW_NAME}] not found");
+
+            m_GreenPresetRow = root.Q<VisualElement>(GREEN_PRESET_ROW_NAME);
+            if (m_GreenPresetRow is null) throw new InvalidOperationException($"[{CLASS_NAME}] VisualElement [{GREEN_PRESET_ROW_NAME}] not found");
 
             m_OrangePreset1 = root.Q<Button>(ORANGE_PRESET_01_BUTTON_NAME);
             if (m_OrangePreset1 is null) throw new InvalidOperationException($"[{CLASS_NAME}] Button [{ORANGE_PRESET_01_BUTTON_NAME}] not found");
@@ -385,9 +416,16 @@ namespace StickHandle.Scripts
             GreenSetButton.clicked        += HandleSetGreen;
             OrangeServerValueButton.clicked += HandleOrangeServerValueClicked;
             GreenServerValueButton.clicked  += HandleGreenServerValueClicked;
+            OrangeRadioButton.clicked       += HandleOrangeRadioClicked;
+            GreenRadioButton.clicked        += HandleGreenRadioClicked;
 
-            StartCoroutine(FetchServerHsv(BANK_ORANGE, m_OrangeServerValueButton, v => m_OrangeServerValue = v));
-            StartCoroutine(FetchServerHsv(BANK_GREEN,  m_GreenServerValueButton,  v => m_GreenServerValue  = v));
+            // Set initial visual state synchronously before coroutine starts
+            m_ActiveBank = BANK_ORANGE;
+            m_OrangeRadioButton.AddToClassList(USS_RADIO_SELECTED);
+            m_OrangePresetRow.SetEnabled(true);
+            m_GreenPresetRow.SetEnabled(false);
+
+            m_PendingRefresh = StartCoroutine(FetchOnActivate());
 
             MinHueSlider.RegisterValueChangedCallback(OnSliderChanged);
             MaxHueSlider.RegisterValueChangedCallback(OnSliderChanged);
@@ -422,6 +460,8 @@ namespace StickHandle.Scripts
             GreenSetButton.clicked        -= HandleSetGreen;
             OrangeServerValueButton.clicked -= HandleOrangeServerValueClicked;
             GreenServerValueButton.clicked  -= HandleGreenServerValueClicked;
+            OrangeRadioButton.clicked       -= HandleOrangeRadioClicked;
+            GreenRadioButton.clicked        -= HandleGreenRadioClicked;
 
             m_MinHueSlider.UnregisterValueChangedCallback(OnSliderChanged);
             m_MaxHueSlider.UnregisterValueChangedCallback(OnSliderChanged);
@@ -450,6 +490,10 @@ namespace StickHandle.Scripts
             m_GreenServerValueButton  = null;
             m_OrangeServerValue       = null;
             m_GreenServerValue        = null;
+            m_OrangeRadioButton       = null;
+            m_GreenRadioButton        = null;
+            m_OrangePresetRow         = null;
+            m_GreenPresetRow          = null;
 
             m_OrangePreset1 = null; m_OrangePreset2 = null; m_OrangePreset3 = null;
             m_OrangePreset4 = null; m_OrangePreset5 = null;
@@ -577,18 +621,28 @@ namespace StickHandle.Scripts
 
         private IEnumerator FetchMaskAndOverlay()
         {
+            yield return StartCoroutine(FetchMaskAndOverlayForBank(m_ActiveBank));
+        }
+
+        private IEnumerator FetchMaskAndOverlayForBank(string bank)
+        {
             string host = Host();
             string query = HsvQuery();
 
             SetStatus("Updating...");
 
             yield return StartCoroutine(FetchImage($"http://{host}/still/mask?{query}", m_MaskPanel));
-            yield return StartCoroutine(FetchOverlayWithCount($"http://{host}/still/overlay?{query}", m_OverlayPanel));
+            yield return StartCoroutine(FetchOverlayWithCount($"http://{host}/still/overlay?{query}", m_OverlayPanel, bank));
 
             SetStatus("Ready — adjust sliders to refine");
         }
 
         private IEnumerator FetchOverlayWithCount(string url, StillImagePanelController panel)
+        {
+            yield return StartCoroutine(FetchOverlayWithCount(url, panel, m_ActiveBank));
+        }
+
+        private IEnumerator FetchOverlayWithCount(string url, StillImagePanelController panel, string bank)
         {
             if (panel == null) yield break;
 
@@ -604,8 +658,25 @@ namespace StickHandle.Scripts
             panel.SetTexture(DownloadHandlerTexture.GetContent(req));
 
             string countHeader = req.GetResponseHeader("X-Blob-Count");
-            if (m_ActiveBank != null && int.TryParse(countHeader, out int count))
-                UpdateBlobCount(m_ActiveBank, count);
+            if (int.TryParse(countHeader, out int count))
+                UpdateBlobCount(bank, count);
+        }
+
+        private IEnumerator FetchOverlayCountOnly(string url, string bank)
+        {
+            using UnityWebRequest req = UnityWebRequest.Get(url);
+            req.downloadHandler = new DownloadHandlerBuffer();
+            yield return req.SendWebRequest();
+
+            if (req.result != UnityWebRequest.Result.Success)
+            {
+                Debug.LogWarning($"[{CLASS_NAME}] FetchOverlayCountOnly failed for {url}: {req.error}");
+                yield break;
+            }
+
+            string countHeader = req.GetResponseHeader("X-Blob-Count");
+            if (int.TryParse(countHeader, out int count))
+                UpdateBlobCount(bank, count);
         }
 
         private void UpdateBlobCount(string bank, int count)
@@ -855,6 +926,8 @@ namespace StickHandle.Scripts
         private void HandlePresetUp(PointerUpEvent evt)
         {
             ApplyPreset((HsvPreset)((Button)evt.target).userData);
+            if (m_PendingRefresh != null) StopCoroutine(m_PendingRefresh);
+            m_PendingRefresh = StartCoroutine(FetchMaskAndOverlayForBank(m_ActiveBank));
         }
 
         private void SavePresets()
@@ -880,6 +953,15 @@ namespace StickHandle.Scripts
 
         private void ApplyPreset(HsvPreset p)
         {
+            // Widen dynamic bounds to full range first — SetValueWithoutNotify still clamps
+            // to [lowValue, highValue], so stale bounds from a previous bank would silently corrupt values.
+            m_MinHueSlider.highValue        = HsvPreset.HUE_MAX;
+            m_MaxHueSlider.lowValue         = 0;
+            m_MinSaturationSlider.highValue = HsvPreset.SATURATION_VALUE_MAX;
+            m_MaxSaturationSlider.lowValue  = 0;
+            m_MinValueSlider.highValue      = HsvPreset.SATURATION_VALUE_MAX;
+            m_MaxValueSlider.lowValue       = 0;
+
             MaxHueSlider.SetValueWithoutNotify(p.hMax);
             MinHueSlider.SetValueWithoutNotify(p.hMin);
             MaxSaturationSlider.SetValueWithoutNotify(p.sMax);
@@ -894,6 +976,104 @@ namespace StickHandle.Scripts
                 ((p.hMin + p.hMax) / 2f) / HSV_HUE_MAX,
                 ((p.sMin + p.sMax) / 2f) / HSV_SATURATION_VALUE_MAX,
                 ((p.vMin + p.vMax) / 2f) / HSV_SATURATION_VALUE_MAX);
+
+        private static string HsvPresetToQuery(HsvPreset p) =>
+            $"h_min={p.hMin}&h_max={p.hMax}" +
+            $"&s_min={p.sMin}&s_max={p.sMax}" +
+            $"&v_min={p.vMin}&v_max={p.vMax}";
+
+        // ── Radio bank selection ──────────────────────────────────────────────────
+
+        private void HandleOrangeRadioClicked() { SelectBank(BANK_ORANGE); }
+        private void HandleGreenRadioClicked()  { SelectBank(BANK_GREEN);  }
+
+        private void SelectBank(string bank)
+        {
+            m_ActiveBank = bank;
+
+            m_OrangeRadioButton.EnableInClassList(USS_RADIO_SELECTED, bank == BANK_ORANGE);
+            m_GreenRadioButton.EnableInClassList(USS_RADIO_SELECTED,  bank == BANK_GREEN);
+            m_OrangePresetRow.SetEnabled(bank == BANK_ORANGE);
+            m_GreenPresetRow.SetEnabled(bank == BANK_GREEN);
+            m_OrangeServerValueButton.SetEnabled(bank == BANK_ORANGE);
+            m_GreenServerValueButton.SetEnabled(bank == BANK_GREEN);
+
+            if (m_PendingRefresh != null) StopCoroutine(m_PendingRefresh);
+            m_PendingRefresh = StartCoroutine(SelectBankCoroutine(bank));
+        }
+
+        private IEnumerator SelectBankCoroutine(string bank)
+        {
+            Button serverValueBtn = bank == BANK_ORANGE ? m_OrangeServerValueButton : m_GreenServerValueButton;
+
+            HsvPreset fetched = null;
+            yield return StartCoroutine(FetchServerHsv(bank, serverValueBtn, v =>
+            {
+                if (bank == BANK_ORANGE) m_OrangeServerValue = v;
+                else                     m_GreenServerValue  = v;
+                fetched = v;
+            }));
+
+            if (fetched == null)
+            {
+                SetStatus($"Could not fetch {bank} filter from server");
+                m_PendingRefresh = null;
+                yield break;
+            }
+
+            ApplyPreset(fetched);
+
+            string host = Host();
+            string endpoint = m_UseDetected ? "detected" : "original";
+            yield return StartCoroutine(FetchImage($"http://{host}/still/{endpoint}", m_OriginalPanel));
+            yield return StartCoroutine(FetchMaskAndOverlayForBank(bank));
+
+            m_HasCaptured = true;
+            m_PendingRefresh = null;
+        }
+
+        // ── Activate fetch ────────────────────────────────────────────────────────
+
+        private IEnumerator FetchOnActivate()
+        {
+            SetStatus("Loading...");
+
+            // Fetch both banks from server (populates server-value buttons + cached values)
+            yield return StartCoroutine(FetchServerHsv(BANK_ORANGE, m_OrangeServerValueButton, v => m_OrangeServerValue = v));
+            yield return StartCoroutine(FetchServerHsv(BANK_GREEN,  m_GreenServerValueButton,  v => m_GreenServerValue  = v));
+
+            // FetchServerHsv re-enables its button unconditionally — restore correct enabled state
+            m_OrangeServerValueButton.SetEnabled(m_ActiveBank == BANK_ORANGE);
+            m_GreenServerValueButton.SetEnabled(m_ActiveBank == BANK_GREEN);
+
+            if (m_OrangeServerValue == null)
+            {
+                SetStatus("Could not fetch HSV filters from server");
+                m_PendingRefresh = null;
+                yield break;
+            }
+
+            // Apply orange values to sliders (orange is the default selected bank)
+            ApplyPreset(m_OrangeServerValue);
+
+            string host     = Host();
+            string endpoint = m_UseDetected ? "detected" : "original";
+            yield return StartCoroutine(FetchImage($"http://{host}/still/{endpoint}", m_OriginalPanel));
+
+            // Orange: fetch mask + overlay, display images, update orange blob count
+            yield return StartCoroutine(FetchMaskAndOverlayForBank(BANK_ORANGE));
+
+            // Green: count-only fetch to populate green blob count label (no image decode)
+            if (m_GreenServerValue != null)
+            {
+                string greenQuery = HsvPresetToQuery(m_GreenServerValue);
+                yield return StartCoroutine(FetchOverlayCountOnly($"http://{host}/still/overlay?{greenQuery}", BANK_GREEN));
+            }
+
+            m_HasCaptured = true;
+            m_PendingRefresh = null;
+            SetStatus("Ready — adjust sliders to refine");
+        }
 
         // ── Server value buttons ─────────────────────────────────────────────────
 
@@ -935,8 +1115,8 @@ namespace StickHandle.Scripts
 
         // ── Set buttons ──────────────────────────────────────────────────────────
 
-        private void HandleSetOrange() { m_ActiveBank = BANK_ORANGE; StartCoroutine(PutHsvFilter(BANK_ORANGE)); }
-        private void HandleSetGreen()  { m_ActiveBank = BANK_GREEN;  StartCoroutine(PutHsvFilter(BANK_GREEN)); }
+        private void HandleSetOrange() { StartCoroutine(PutHsvFilter(BANK_ORANGE)); }
+        private void HandleSetGreen()  { StartCoroutine(PutHsvFilter(BANK_GREEN));  }
 
         private IEnumerator PutHsvFilter(string color)
         {

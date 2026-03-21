@@ -38,9 +38,9 @@
         {
           "hMin": 5,
           "hMax": 25,
-          "sMin": 192,
+          "sMin": 200,
           "sMax": 255,
-          "vMin": 100,
+          "vMin": 200,
           "vMax": 255
         }
       ]
@@ -57,11 +57,11 @@
           "vMax": 255
         },
         {
-          "hMin": 40,
-          "hMax": 80,
-          "sMin": 60,
-          "sMax": 255,
-          "vMin": 60,
+          "hMin": 70,
+          "hMax": 90,
+          "sMin": 21,
+          "sMax": 121,
+          "vMin": 90,
           "vMax": 255
         },
         {
@@ -83,9 +83,9 @@
         {
           "hMin": 75,
           "hMax": 90,
-          "sMin": 41,
+          "sMin": 30,
           "sMax": 255,
-          "vMin": 142,
+          "vMin": 30,
           "vMax": 255
         }
       ]

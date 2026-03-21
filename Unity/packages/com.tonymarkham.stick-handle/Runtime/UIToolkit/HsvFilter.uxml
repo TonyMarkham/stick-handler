@@ -20,9 +20,10 @@
         </ui:VisualElement>
         <ui:VisualElement name="preset-banks" class="preset-banks-col">
             <ui:VisualElement name="orange-bank" class="preset-bank">
+                <ui:Button name="orange-radio" class="radio-btn"/>
                 <ui:Button name="orange-server-value-btn" text="" class="bs set-btn"/>
                 <ui:Label text="Orange" class="bank-label orange-label"/>
-                <ui:VisualElement class="preset-row">
+                <ui:VisualElement name="orange-preset-row" class="preset-row">
                     <ui:Button name="orange-preset-1" text="P1" class="bs preset-btn">
                         <sh:SavingOverlay name="orange-preset-1-overlay">
                             <ui:Label name="orange-preset-1-label" text="SAVING" class="saving-label"/>
@@ -50,12 +51,13 @@
                     </ui:Button>
                     <ui:Button name="orange-set-btn" text="Set" class="bs set-btn"/>
                 </ui:VisualElement>
-                <ui:Label name="orange-blob-count-label" text="" class="blob-count-label"/>
+                <ui:Label name="orange-blob-count-label" text="—" class="blob-count-label"/>
             </ui:VisualElement>
             <ui:VisualElement name="green-bank" class="preset-bank">
+                <ui:Button name="green-radio" class="radio-btn"/>
                 <ui:Button name="green-server-value-btn" text="" class="bs set-btn"/>
                 <ui:Label text="Green" class="bank-label green-label"/>
-                <ui:VisualElement class="preset-row">
+                <ui:VisualElement name="green-preset-row" class="preset-row">
                     <ui:Button name="green-preset-1" text="P1" class="bs preset-btn">
                         <sh:SavingOverlay name="green-preset-1-overlay">
                             <ui:Label name="green-preset-1-label" text="SAVING" class="saving-label"/>
@@ -83,7 +85,7 @@
                     </ui:Button>
                     <ui:Button name="green-set-btn" text="Set" class="bs set-btn"/>
                 </ui:VisualElement>
-                <ui:Label name="green-blob-count-label" text="" class="blob-count-label"/>
+                <ui:Label name="green-blob-count-label" text="—" class="blob-count-label"/>
             </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>

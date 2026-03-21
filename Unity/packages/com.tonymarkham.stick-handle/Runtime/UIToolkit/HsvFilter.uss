@@ -178,6 +178,37 @@
     align-self: center;
 }
 
+/* ── Radio buttons ───────────────────────────────── */
+
+.radio-btn {
+    width: 16px;
+    height: 16px;
+    border-radius: 8px;
+    border-width: 2px;
+    border-color: rgb(160, 160, 160);
+    background-color: transparent;
+    margin: 0 4px 0 0;
+    padding: 0;
+    flex-shrink: 0;
+    transition-property: background-color, border-color;
+    transition-duration: 100ms, 100ms;
+    transition-timing-function: ease-out, ease-out;
+}
+
+.radio-btn:hover {
+    border-color: white;
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+.radio-btn.radio-selected {
+    background-color: rgb(0, 180, 100);
+    border-color: white;
+}
+
+.preset-row:disabled {
+    opacity: 0.35;
+}
+
 /* ── Sliders ─────────────────────────────────────── */
 
 .sliders-col {
