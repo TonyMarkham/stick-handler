@@ -2579,11 +2579,9 @@ MonoBehaviour:
   m_TelevisionController: {fileID: 1402879765}
   m_Label: Overlay
   m_ToggleEnabled: 0
-  m_HsvCalibrationMenuController: {fileID: 0}
-  m_UiDocument: {fileID: 0}
-  m_PanelSettings: {fileID: 0}
-  m_VisualTreeAsset: {fileID: 0}
-  m_StyleSheet: {fileID: 0}
+  m_PanelSettings: {fileID: 11400000, guid: 7214d0d2f8c497241ad9ecb2bea27a6d, type: 2}
+  m_VisualTreeAsset: {fileID: 9197481963319205126, guid: 81dc3fe0fd650284481ba21605db0375, type: 3}
+  m_StyleSheet: {fileID: 7433441132597879392, guid: a2e012c01d4b5c64dae9396af3d4cbc7, type: 3}
 --- !u!1 &480823064
 GameObject:
   m_ObjectHideFlags: 0
@@ -4462,11 +4460,9 @@ MonoBehaviour:
   m_TelevisionController: {fileID: 1936430424}
   m_Label: Mask
   m_ToggleEnabled: 0
-  m_HsvCalibrationMenuController: {fileID: 0}
-  m_UiDocument: {fileID: 0}
-  m_PanelSettings: {fileID: 0}
-  m_VisualTreeAsset: {fileID: 0}
-  m_StyleSheet: {fileID: 0}
+  m_PanelSettings: {fileID: 11400000, guid: 7214d0d2f8c497241ad9ecb2bea27a6d, type: 2}
+  m_VisualTreeAsset: {fileID: 9197481963319205126, guid: 81dc3fe0fd650284481ba21605db0375, type: 3}
+  m_StyleSheet: {fileID: 7433441132597879392, guid: a2e012c01d4b5c64dae9396af3d4cbc7, type: 3}
 --- !u!1 &813718820
 GameObject:
   m_ObjectHideFlags: 0
@@ -4676,11 +4672,9 @@ MonoBehaviour:
   m_TelevisionController: {fileID: 2054986113}
   m_Label: Original
   m_ToggleEnabled: 1
-  m_HsvCalibrationMenuController: {fileID: 0}
-  m_UiDocument: {fileID: 0}
-  m_PanelSettings: {fileID: 0}
-  m_VisualTreeAsset: {fileID: 0}
-  m_StyleSheet: {fileID: 0}
+  m_PanelSettings: {fileID: 11400000, guid: 7214d0d2f8c497241ad9ecb2bea27a6d, type: 2}
+  m_VisualTreeAsset: {fileID: 9197481963319205126, guid: 81dc3fe0fd650284481ba21605db0375, type: 3}
+  m_StyleSheet: {fileID: 7433441132597879392, guid: a2e012c01d4b5c64dae9396af3d4cbc7, type: 3}
 --- !u!1 &838749491
 GameObject:
   m_ObjectHideFlags: 0

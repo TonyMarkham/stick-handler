@@ -75,7 +75,9 @@
       "version": "file:D:/git/stick-handler/Unity/packages/com.tonymarkham.stick-handle",
       "depth": 0,
       "source": "local",
-      "dependencies": {}
+      "dependencies": {
+        "com.unity.nuget.newtonsoft-json": "3.2.2"
+      }
     },
     "com.tonymarkham.unity-utils": {
       "version": "file:D:/git/unity-utils/package",
