@@ -45,6 +45,27 @@ pub async fn put_orange_handler(
     persist(&state.hsv_presets_path, &presets).await
 }
 
+pub async fn put_green2_handler(
+    State(state): State<Arc<AppState>>,
+    Json(range): Json<HsvRange>,
+) -> StatusCode {
+    let presets = {
+        let mut lock = state.hsv_presets.write().await;
+        lock.green2 = Some(range);
+        lock.clone()
+    };
+    persist(&state.hsv_presets_path, &presets).await
+}
+
+pub async fn delete_green2_handler(State(state): State<Arc<AppState>>) -> StatusCode {
+    let presets = {
+        let mut lock = state.hsv_presets.write().await;
+        lock.green2 = None;
+        lock.clone()
+    };
+    persist(&state.hsv_presets_path, &presets).await
+}
+
 async fn persist(path: &Path, presets: &HsvPresets) -> StatusCode {
     match serde_json::to_string_pretty(presets) {
         Ok(json) => match tokio::fs::write(path, json).await {

@@ -2,7 +2,7 @@ use crate::{
     app_state::{HsvPresets, MjpegPipeline},
     camera_handle::CameraHandle,
     error::{ServerResult, camera_error},
-    still_handler::{HsvParams, blob_circles, decode_jpeg, hsv_mask},
+    still_handler::{HsvParams, decode_jpeg, green_centroid},
 };
 
 use bytes::Bytes;
@@ -123,16 +123,14 @@ pub fn start_detection_loop(
                 Ok(frame) => {
                     *latest_frame_clone.write().await = Some(frame.clone());
 
-                    let preset = hsv_presets.read().await.green.clone();
-                    let params: HsvParams = preset.into();
+                    let presets = hsv_presets.read().await;
+                    let green_params: HsvParams = presets.green.clone().into();
+                    let green2_params: Option<HsvParams> = presets.green2.clone().map(Into::into);
+                    drop(presets);
 
                     let result = tokio::task::spawn_blocking(move || {
                         let bgr = decode_jpeg(&frame)?;
-                        let mask = hsv_mask(&bgr, params)?;
-                        let circles = blob_circles(&mask, 1)?;
-                        Ok::<_, opencv::Error>(
-                            circles.into_iter().next().map(|(cx, cy, _)| (cx, cy)),
-                        )
+                        green_centroid(&bgr, green_params, green2_params)
                     })
                     .await;
 

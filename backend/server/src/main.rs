@@ -57,6 +57,10 @@ async fn main() {
         .route("/hsv", get(hsv_handler::get_handler))
         .route("/hsv/green", put(hsv_handler::put_green_handler))
         .route("/hsv/orange", put(hsv_handler::put_orange_handler))
+        .route(
+            "/hsv/green2",
+            put(hsv_handler::put_green2_handler).delete(hsv_handler::delete_green2_handler),
+        )
         // World calibration mode
         .route(
             "/calibration/start",

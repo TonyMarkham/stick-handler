@@ -11,6 +11,10 @@ use opencv::{
     imgcodecs, imgproc,
     prelude::*,
 };
+
+const MORPH_CLOSE_KERNEL: i32 = 25;
+const MIN_ORANGE_AREA_PX2: f64 = 30.0;
+const MIN_GREEN_AREA_PX2: f64 = 500.0;
 use serde::Deserialize;
 use std::sync::Arc;
 use tokio::process::Command;
@@ -208,6 +212,113 @@ pub(crate) fn hsv_mask(src: &Mat, params: HsvParams) -> opencv::Result<Mat> {
     Ok(mask)
 }
 
+/// Applies morphological closing (dilate → erode) to `mask`, filling holes
+/// caused by specular highlights.  Uses an elliptical kernel of `kernel_size`.
+fn morph_close(mask: &Mat, kernel_size: i32) -> opencv::Result<Mat> {
+    let kernel = imgproc::get_structuring_element(
+        imgproc::MORPH_ELLIPSE,
+        core::Size::new(kernel_size, kernel_size),
+        core::Point::new(-1, -1),
+    )?;
+    let mut closed = Mat::default();
+    imgproc::morphology_ex(
+        mask,
+        &mut closed,
+        imgproc::MORPH_CLOSE,
+        &kernel,
+        core::Point::new(-1, -1),
+        2,
+        core::BORDER_CONSTANT,
+        imgproc::morphology_default_border_value()?,
+    )?;
+    Ok(closed)
+}
+
+/// Finds up to `max` orange sticker centroids using `fitEllipse` (accurate for
+/// flat, angled elliptical projections).  Returns `(cx, cy, representative_radius)`.
+pub(crate) fn orange_centroids(mask: &Mat, max: usize) -> opencv::Result<Vec<(f32, f32, f32)>> {
+    let mask_mut = mask.clone();
+    let mut contours: Vector<Vector<core::Point>> = Vector::new();
+    imgproc::find_contours(
+        &mask_mut,
+        &mut contours,
+        imgproc::RETR_EXTERNAL,
+        imgproc::CHAIN_APPROX_SIMPLE,
+        core::Point::new(0, 0),
+    )?;
+
+    let mut results: Vec<(f32, f32, f32, f64)> = Vec::new(); // (cx, cy, r, area)
+    for i in 0..contours.len() {
+        let contour = contours.get(i)?;
+        if contour.len() < 5 {
+            continue; // fitEllipse requires at least 5 points
+        }
+        let area = imgproc::contour_area(&contour, false)?;
+        if area < MIN_ORANGE_AREA_PX2 {
+            continue;
+        }
+        let ellipse = imgproc::fit_ellipse(&contour)?;
+        let cx = ellipse.center.x;
+        let cy = ellipse.center.y;
+        let r = (ellipse.size.width + ellipse.size.height) / 4.0;
+        results.push((cx, cy, r, area));
+    }
+    results.sort_by(|a, b| b.3.partial_cmp(&a.3).unwrap_or(std::cmp::Ordering::Equal));
+    results.truncate(max);
+    Ok(results
+        .into_iter()
+        .map(|(cx, cy, r, _)| (cx, cy, r))
+        .collect())
+}
+
+/// Detects the green puck centroid via image moments on the combined
+/// (green OR green2) mask after morphological closing.
+pub(crate) fn green_centroid(
+    bgr: &Mat,
+    green_params: HsvParams,
+    green2_params: Option<HsvParams>,
+) -> opencv::Result<Option<(f32, f32)>> {
+    let mut mask = hsv_mask(bgr, green_params)?;
+    if let Some(p2) = green2_params {
+        let mask2 = hsv_mask(bgr, p2)?;
+        let mut combined = Mat::default();
+        core::bitwise_or(&mask, &mask2, &mut combined, &core::no_array())?;
+        mask = combined;
+    }
+    let closed = morph_close(&mask, MORPH_CLOSE_KERNEL)?;
+
+    let mut contours: Vector<Vector<core::Point>> = Vector::new();
+    imgproc::find_contours(
+        &closed.clone(),
+        &mut contours,
+        imgproc::RETR_EXTERNAL,
+        imgproc::CHAIN_APPROX_SIMPLE,
+        core::Point::new(0, 0),
+    )?;
+
+    let mut best: Option<(f64, usize)> = None; // (area, index)
+    for i in 0..contours.len() {
+        let contour = contours.get(i)?;
+        let area = imgproc::contour_area(&contour, false)?;
+        if area < MIN_GREEN_AREA_PX2 {
+            continue;
+        }
+        if best.is_none_or(|(best_area, _)| area > best_area) {
+            best = Some((area, i));
+        }
+    }
+
+    let Some((_, idx)) = best else {
+        return Ok(None);
+    };
+    let contour = contours.get(idx)?;
+    let m = imgproc::moments(&contour, false)?;
+    if m.m00 == 0.0 {
+        return Ok(None);
+    }
+    Ok(Some(((m.m10 / m.m00) as f32, (m.m01 / m.m00) as f32)))
+}
+
 fn build_mask(data: &Bytes, params: HsvParams) -> opencv::Result<(Bytes, usize)> {
     let bgr = decode_jpeg(data)?;
     let mask = hsv_mask(&bgr, params)?;
@@ -357,13 +468,28 @@ fn build_detected(data: &Bytes, presets: HsvPresets) -> opencv::Result<Bytes> {
     let bgr = decode_jpeg(data)?;
 
     let orange_mask = hsv_mask(&bgr, presets.orange.into())?;
-    let green_mask = hsv_mask(&bgr, presets.green.into())?;
+    let green_params: HsvParams = presets.green.into();
+    let green2_params: Option<HsvParams> = presets.green2.map(Into::into);
 
-    // Combined mask for the yellow overlay.
+    // Build combined green mask (with green2 OR'd in) for the yellow overlay.
+    let mut green_combined = hsv_mask(&bgr, green_params)?;
+    if let Some(p2) = green2_params {
+        let mask2 = hsv_mask(&bgr, p2)?;
+        let mut tmp = Mat::default();
+        core::bitwise_or(&green_combined, &mask2, &mut tmp, &core::no_array())?;
+        green_combined = tmp;
+    }
+
+    // Combined orange+green mask for the yellow overlay.
     let mut combined = Mat::default();
-    core::bitwise_or(&orange_mask, &green_mask, &mut combined, &core::no_array())?;
+    core::bitwise_or(
+        &orange_mask,
+        &green_combined,
+        &mut combined,
+        &core::no_array(),
+    )?;
 
-    // Build yellow overlay on the combined mask (same logic as build_overlay).
+    // Build yellow overlay on the combined mask.
     let yellow = Mat::new_rows_cols_with_default(
         bgr.rows(),
         bgr.cols(),
@@ -385,12 +511,14 @@ fn build_detected(data: &Bytes, presets: HsvPresets) -> opencv::Result<Bytes> {
     let mut result = Mat::default();
     core::bitwise_or(&blend_part, &orig_part, &mut result, &core::no_array())?;
 
-    // Draw crosshairs: 3 largest orange blobs, 1 largest green blob.
-    for (cx, cy, r) in blob_circles(&orange_mask, 3)?
-        .into_iter()
-        .chain(blob_circles(&green_mask, 1)?)
-    {
+    // Draw crosshairs: 4 largest orange stickers (fitEllipse centres).
+    for (cx, cy, r) in orange_centroids(&orange_mask, 4)? {
         draw_circle_crosshair(&mut result, cx, cy, r)?;
+    }
+
+    // Green puck: moments centroid on the closed combined mask.
+    if let Some((cx, cy)) = green_centroid(&bgr, green_params, green2_params)? {
+        draw_circle_crosshair(&mut result, cx, cy, 30.0)?;
     }
 
     encode_jpeg(&result)

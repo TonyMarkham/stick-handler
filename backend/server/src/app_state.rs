@@ -19,6 +19,8 @@ pub struct HsvRange {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HsvPresets {
     pub green: HsvRange,
+    #[serde(default)]
+    pub green2: Option<HsvRange>,
     pub orange: HsvRange,
 }
 
@@ -33,6 +35,7 @@ impl Default for HsvPresets {
                 v_min: 30,
                 v_max: 110,
             },
+            green2: None,
             orange: HsvRange {
                 h_min: 0,
                 h_max: 20,

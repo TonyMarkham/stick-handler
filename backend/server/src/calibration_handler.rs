@@ -1,7 +1,7 @@
 use crate::{
     app_state::{AppState, HsvRange, ServerMode},
     mjpeg_pipeline,
-    still_handler::{HsvParams, blob_circles, decode_jpeg, hsv_mask},
+    still_handler::{HsvParams, decode_jpeg, hsv_mask, orange_centroids},
 };
 
 use axum::{Json, extract::State, http::StatusCode, response::IntoResponse};
@@ -165,7 +165,7 @@ fn compute_homography(
 ) -> Result<Vec<f64>, RecalcError> {
     let bgr = decode_jpeg(frame)?;
     let orange_mask = hsv_mask(&bgr, HsvParams::from(orange_preset))?;
-    let blobs = blob_circles(&orange_mask, 4)?;
+    let blobs = orange_centroids(&orange_mask, 4)?;
 
     if blobs.len() != 4 {
         return Err(RecalcError::WrongBlobCount(blobs.len()));
