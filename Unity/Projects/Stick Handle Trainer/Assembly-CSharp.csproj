@@ -44,6 +44,7 @@
   <ItemGroup>
     <None Include="D:\git\unity-utils\package\package.json" />
     <None Include="Assets\StreamingAssets\hsv_presets.json" />
+    <None Include="Assets\__wip__.uss" />
     <None Include="D:\git\gltforge\unity\packages\gltforge\package.json" />
     <None Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\package.json" />
     <Reference Include="UnityEngine">

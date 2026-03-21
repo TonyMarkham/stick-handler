@@ -34,6 +34,8 @@ namespace StickHandle.Scripts
     [RequiredUxmlElement(typeof(SavingOverlay), ORANGE_PRESET_04_OVERLAY_NAME)]
     [RequiredUxmlElement(typeof(SavingOverlay), ORANGE_PRESET_05_OVERLAY_NAME)]
     [RequiredUxmlElement(typeof(Label),      GREEN_BLOB_COUNT_LABEL_NAME)]
+    [RequiredUxmlElement(typeof(Button),     ORANGE_SERVER_VALUE_BUTTON_NAME)]
+    [RequiredUxmlElement(typeof(Button),     GREEN_SERVER_VALUE_BUTTON_NAME)]
     [RequiredUxmlElement(typeof(Button),     GREEN_SET_BUTTON_NAME)]
     [RequiredUxmlElement(typeof(Button),     GREEN_PRESET_01_BUTTON_NAME)]
     [RequiredUxmlElement(typeof(Button),     GREEN_PRESET_02_BUTTON_NAME)]
@@ -79,6 +81,9 @@ namespace StickHandle.Scripts
         private const string GREEN_PRESET_05_BUTTON_NAME = "green-preset-5";
         private const string GREEN_SET_BUTTON_NAME = "green-set-btn";
         private const string GREEN_BLOB_COUNT_LABEL_NAME = "green-blob-count-label";
+
+        private const string ORANGE_SERVER_VALUE_BUTTON_NAME = "orange-server-value-btn";
+        private const string GREEN_SERVER_VALUE_BUTTON_NAME  = "green-server-value-btn";
 
         private const string ORANGE_PRESET_01_OVERLAY_NAME = "orange-preset-1-overlay";
         private const string ORANGE_PRESET_02_OVERLAY_NAME = "orange-preset-2-overlay";
@@ -187,6 +192,15 @@ namespace StickHandle.Scripts
         private Button m_GreenSetButton;
         private Button GreenSetButton => m_GreenSetButton;
 
+        private Button m_OrangeServerValueButton;
+        private Button OrangeServerValueButton => m_OrangeServerValueButton;
+
+        private Button m_GreenServerValueButton;
+        private Button GreenServerValueButton => m_GreenServerValueButton;
+
+        private HsvPreset m_OrangeServerValue;
+        private HsvPreset m_GreenServerValue;
+
         private Button m_OrangePreset1, m_OrangePreset2, m_OrangePreset3, m_OrangePreset4, m_OrangePreset5;
         private Button m_GreenPreset1,  m_GreenPreset2,  m_GreenPreset3,  m_GreenPreset4,  m_GreenPreset5;
 
@@ -242,6 +256,12 @@ namespace StickHandle.Scripts
 
             m_GreenSetButton = root.Q<Button>(GREEN_SET_BUTTON_NAME);
             if (m_GreenSetButton is null) throw new InvalidOperationException($"[{CLASS_NAME}] Button [{GREEN_SET_BUTTON_NAME}] not found");
+
+            m_OrangeServerValueButton = root.Q<Button>(ORANGE_SERVER_VALUE_BUTTON_NAME);
+            if (m_OrangeServerValueButton is null) throw new InvalidOperationException($"[{CLASS_NAME}] Button [{ORANGE_SERVER_VALUE_BUTTON_NAME}] not found");
+
+            m_GreenServerValueButton = root.Q<Button>(GREEN_SERVER_VALUE_BUTTON_NAME);
+            if (m_GreenServerValueButton is null) throw new InvalidOperationException($"[{CLASS_NAME}] Button [{GREEN_SERVER_VALUE_BUTTON_NAME}] not found");
 
             m_OrangePreset1 = root.Q<Button>(ORANGE_PRESET_01_BUTTON_NAME);
             if (m_OrangePreset1 is null) throw new InvalidOperationException($"[{CLASS_NAME}] Button [{ORANGE_PRESET_01_BUTTON_NAME}] not found");
@@ -361,8 +381,13 @@ namespace StickHandle.Scripts
 
             CaptureButton.clicked    += HandleCapture;
             BackButton.clicked       += HandleBack;
-            OrangeSetButton.clicked  += HandleSetOrange;
-            GreenSetButton.clicked   += HandleSetGreen;
+            OrangeSetButton.clicked       += HandleSetOrange;
+            GreenSetButton.clicked        += HandleSetGreen;
+            OrangeServerValueButton.clicked += HandleOrangeServerValueClicked;
+            GreenServerValueButton.clicked  += HandleGreenServerValueClicked;
+
+            StartCoroutine(FetchServerHsv(BANK_ORANGE, m_OrangeServerValueButton, v => m_OrangeServerValue = v));
+            StartCoroutine(FetchServerHsv(BANK_GREEN,  m_GreenServerValueButton,  v => m_GreenServerValue  = v));
 
             MinHueSlider.RegisterValueChangedCallback(OnSliderChanged);
             MaxHueSlider.RegisterValueChangedCallback(OnSliderChanged);
@@ -391,10 +416,12 @@ namespace StickHandle.Scripts
         {
             UnwirePresets();
 
-            CaptureButton.clicked    -= HandleCapture;
-            BackButton.clicked       -= HandleBack;
-            OrangeSetButton.clicked  -= HandleSetOrange;
-            GreenSetButton.clicked   -= HandleSetGreen;
+            CaptureButton.clicked         -= HandleCapture;
+            BackButton.clicked            -= HandleBack;
+            OrangeSetButton.clicked       -= HandleSetOrange;
+            GreenSetButton.clicked        -= HandleSetGreen;
+            OrangeServerValueButton.clicked -= HandleOrangeServerValueClicked;
+            GreenServerValueButton.clicked  -= HandleGreenServerValueClicked;
 
             m_MinHueSlider.UnregisterValueChangedCallback(OnSliderChanged);
             m_MaxHueSlider.UnregisterValueChangedCallback(OnSliderChanged);
@@ -419,6 +446,10 @@ namespace StickHandle.Scripts
             m_GreenBlobCountLabel  = null;
             m_OrangeSetButton      = null;
             m_GreenSetButton       = null;
+            m_OrangeServerValueButton = null;
+            m_GreenServerValueButton  = null;
+            m_OrangeServerValue       = null;
+            m_GreenServerValue        = null;
 
             m_OrangePreset1 = null; m_OrangePreset2 = null; m_OrangePreset3 = null;
             m_OrangePreset4 = null; m_OrangePreset5 = null;
@@ -864,6 +895,44 @@ namespace StickHandle.Scripts
                 ((p.sMin + p.sMax) / 2f) / HSV_SATURATION_VALUE_MAX,
                 ((p.vMin + p.vMax) / 2f) / HSV_SATURATION_VALUE_MAX);
 
+        // ── Server value buttons ─────────────────────────────────────────────────
+
+        private void HandleOrangeServerValueClicked()
+        {
+            if (m_OrangeServerValue != null) ApplyPreset(m_OrangeServerValue);
+        }
+
+        private void HandleGreenServerValueClicked()
+        {
+            if (m_GreenServerValue != null) ApplyPreset(m_GreenServerValue);
+        }
+
+        private IEnumerator FetchServerHsv(string color, Button btn, Action<HsvPreset> onFetched)
+        {
+            btn.SetEnabled(false);
+            btn.style.backgroundColor = new StyleColor(Color.grey);
+            btn.tooltip = string.Empty;
+
+            using UnityWebRequest req = UnityWebRequest.Get($"http://{Host()}/hsv");
+            yield return req.SendWebRequest();
+
+            if (req.result != UnityWebRequest.Result.Success)
+                yield break;
+
+            var response = JsonConvert.DeserializeObject<ServerHsvResponse>(req.downloadHandler.text);
+            var r = color == BANK_ORANGE ? response.orange : response.green;
+
+            var preset = new HsvPreset();
+            preset.hMax = r.hMax; preset.hMin = r.hMin;
+            preset.sMax = r.sMax; preset.sMin = r.sMin;
+            preset.vMax = r.vMax; preset.vMin = r.vMin;
+            onFetched(preset);
+
+            btn.style.backgroundColor = new StyleColor(MedianHsvColor(preset));
+            btn.tooltip = $"H {r.hMin}-{r.hMax}  S {r.sMin}-{r.sMax}  V {r.vMin}-{r.vMax}";
+            btn.SetEnabled(true);
+        }
+
         // ── Set buttons ──────────────────────────────────────────────────────────
 
         private void HandleSetOrange() { m_ActiveBank = BANK_ORANGE; StartCoroutine(PutHsvFilter(BANK_ORANGE)); }
@@ -884,9 +953,18 @@ namespace StickHandle.Scripts
             yield return req.SendWebRequest();
 
             if (req.result != UnityWebRequest.Result.Success)
+            {
                 SetStatus($"Set {color} failed: {req.error}");
+            }
             else
+            {
                 SetStatus($"{color} filter updated");
+
+                if (color == BANK_ORANGE && m_OrangeServerValueButton != null)
+                    StartCoroutine(FetchServerHsv(BANK_ORANGE, m_OrangeServerValueButton, v => m_OrangeServerValue = v));
+                else if (m_GreenServerValueButton != null)
+                    StartCoroutine(FetchServerHsv(BANK_GREEN,  m_GreenServerValueButton,  v => m_GreenServerValue  = v));
+            }
         }
     }
 }

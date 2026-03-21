@@ -56,11 +56,13 @@
     <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\PresetBank.cs" />
     <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\Attributes\RequiredRefAttribute.cs" />
     <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\PanelSettingsExtensionMethods.cs" />
+    <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\ServerHsvRange.cs" />
     <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\SavingOverlay.cs" />
     <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\CalibrationModeController.cs" />
     <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\PresetConfig.cs" />
     <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\CalibrationMenuController.cs" />
     <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\Utilities.cs" />
+    <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\ServerHsvResponse.cs" />
     <Compile Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\Scripts\HsvPreset.cs" />
     <None Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\UIToolkit\HsvFilter.uss" />
     <None Include="D:\git\stick-handler\Unity\packages\com.tonymarkham.stick-handle\Runtime\UIToolkit\StillImagePanel.uxml" />

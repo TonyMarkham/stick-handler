@@ -129,21 +129,6 @@
     font-size: 11px;
     margin: 0 2px;
     padding: 0;
-    border-width: 2px;
-    border-color: transparent;
-    transition-property: scale, border-color;
-    transition-duration: 100ms, 100ms;
-    transition-timing-function: ease-out, ease-out;
-}
-
-.preset-btn:hover {
-    scale: 1.15;
-    border-color: white;
-}
-
-.preset-btn:active {
-    scale: 0.90;
-    border-color: rgba(255, 255, 255, 0.5);
 }
 
 .set-btn {
@@ -152,21 +137,6 @@
     margin: 0 2px 0 6px;
     padding: 0;
     background-color: rgba(0, 160, 80, 0.9);
-    border-width: 2px;
-    border-color: transparent;
-    transition-property: scale, border-color;
-    transition-duration: 100ms, 100ms;
-    transition-timing-function: ease-out, ease-out;
-}
-
-.set-btn:hover {
-    scale: 1.15;
-    border-color: white;
-}
-
-.set-btn:active {
-    scale: 0.90;
-    border-color: rgba(255, 255, 255, 0.5);
 }
 
 /* ── Blob count badges ───────────────────────────── */
