@@ -83,6 +83,29 @@ Registered with `webrtc-rs` `MediaEngine`:
 - `sdp_fmtp_line`: `"level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42e01f"`
 - `clock_rate`: `90_000`, `payload_type`: `96`
 
+### Detection Pipeline
+
+**Orange (calibration only, not time-critical)**
+- `calibration_handler.rs` → `compute_homography()` → `orange_centroids()` in `still_handler.rs`
+- 4 flat floor stickers project as ellipses under angled camera → `fitEllipse` for accurate centres
+- `MIN_ORANGE_AREA_PX2 = 30.0` (stickers are small in pixel area)
+- Confirmed HSV: `h:5-25 / s:200-255 / v:200-255`
+- `POST /calibration/recalc` requires exactly 4 blobs visible + real-world XZ coords in body
+
+**Green puck (game hot path, target 30fps)**
+- `mjpeg_pipeline.rs` → `start_detection_loop()` → `green_centroid()` in `still_handler.rs`
+- Puck is ~1" tall, projects as irregular shape — moments centroid, no shape assumption
+- Optional `green2: Option<HsvRange>` OR'd with `green` to catch specular/washed-out regions
+- Morph close (kernel=25, 2 iterations) applied after combined mask — consider gating on `green2.is_some()` if 30fps is tight
+- `MIN_GREEN_AREA_PX2 = 500.0`
+- Confirmed HSV: `h:75-90 / s:30-255 / v:30-255`
+- `PUT/DELETE /hsv/green2` to set/clear the second green range
+
+**HSV presets persistence**
+- Server saves to `hsv_presets.json` relative to the binary (e.g. `target/release/hsv_presets.json`)
+- Unity-side presets at `Unity/Projects/Stick Handle Trainer/Assets/StreamingAssets/hsv_presets.json` — different format (banks/presets array, camelCase keys), sent to server via `PUT /hsv/*`
+- Pi hostname: `tony@test-pi`, server at `http://test-pi:8080`
+
 ### Key Design Constraints
 
 - `H264Reader` is **synchronous** — must run inside `tokio::task::spawn_blocking` with `SyncIoBridge`
